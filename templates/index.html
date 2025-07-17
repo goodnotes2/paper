@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>품목 검색</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .password-container {
+            background-color: #ffffff;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .search-input {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            width: 100%;
+        }
+        .search-button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .search-button:hover {
+            background-color: #2563eb;
+        }
+        .table-header {
+            background-color: #e5e7eb;
+            color: #374151;
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            text-align: left;
+        }
+        .table-row:nth-child(odd) {
+            background-color: #f9fafb;
+        }
+        .table-row-cell {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .sort-link {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: #374151;
+            text-decoration: none;
+        }
+        .sort-link:hover {
+            color: #1f2937;
+        }
+        .sort-icon {
+            font-size: 0.75rem;
+        }
+        .flash-message {
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-message.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .flash-message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    {% if not authenticated %}
+        <div class="password-container">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8">비밀번호 입력</h2>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-6">
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            <form method="POST" action="{{ url_for('index') }}" class="space-y-6">
+                <div>
+                    <label for="password" class="sr-only">비밀번호</label>
+                    <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요" required
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <button type="submit"
+                        class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                    접근
+                </button>
+            </form>
+        </div>
+    {% else %}
+        <div class="container">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-4xl font-extrabold text-gray-900">품목 검색</h1>
+                {# 로그아웃 버튼을 추가하려면 여기에 추가할 수 있습니다. 예:
+                <form method="POST" action="{{ url_for('logout') }}">
+                    <button type="submit" class="py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-150 ease-in-out">로그아웃</button>
+                </form>
+                현재는 단일 비밀번호 접근이므로 로그아웃 기능은 필요 없을 수 있습니다. #}
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-6">
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="flex justify-center mb-8">
+                <img src="{{ url_for('static', filename=logo_path) }}" alt="Search Logo" class="max-w-xs h-auto rounded-lg shadow-md">
+            </div>
+
+            <form method="POST" action="{{ url_for('index') }}" class="flex gap-4 mb-8">
+                <input type="text" name="keyword" placeholder="품목 또는 시트명을 입력하세요..." value="{{ keyword }}"
+                       class="search-input flex-grow focus:ring-blue-500 focus:border-blue-500">
+                <button type="submit" class="search-button">검색</button>
+            </form>
+
+            {% if message %}
+                <p class="text-center text-gray-600 text-lg mb-6">{{ message }}</p>
+            {% endif %}
+
+            {% if results %}
+                <div class="overflow-x-auto rounded-lg shadow-md">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="table-header">
+                                    <a href="{{ url_for('index', keyword=keyword, sort_by='품목', sort_order='asc' if current_sort_by != '품목' or current_sort_order == 'desc' else 'desc') }}" class="sort-link">
+                                        품목
+                                        {% if current_sort_by == '품목' %}
+                                            <span class="sort-icon">{{ '▲' if current_sort_order == 'asc' else '▼' }}</span>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th scope="col" class="table-header">
+                                    <a href="{{ url_for('index', keyword=keyword, sort_by='사이즈', sort_order='asc' if current_sort_by != '사이즈' or current_sort_order == 'desc' else 'desc') }}" class="sort-link">
+                                        사이즈
+                                        {% if current_sort_by == '사이즈' %}
+                                            <span class="sort-icon">{{ '▲' if current_sort_order == 'asc' else '▼' }}</span>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th scope="col" class="table-header">
+                                    <a href="{{ url_for('index', keyword=keyword, sort_by='평량', sort_order='asc' if current_sort_by != '평량' or current_sort_order == 'desc' else 'desc') }}" class="sort-link">
+                                        평량
+                                        {% if current_sort_by == '평량' %}
+                                            <span class="sort-icon">{{ '▲' if current_sort_order == 'asc' else '▼' }}</span>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th scope="col" class="table-header">
+                                    <a href="{{ url_for('index', keyword=keyword, sort_by='색상 및 패턴', sort_order='asc' if current_sort_by != '색상 및 패턴' or current_sort_order == 'desc' else 'desc') }}" class="sort-link">
+                                        색상 및 패턴
+                                        {% if current_sort_by == '색상 및 패턴' %}
+                                            <span class="sort-icon">{{ '▲' if current_sort_order == 'asc' else '▼' }}</span>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th scope="col" class="table-header">
+                                    <a href="{{ url_for('index', keyword=keyword, sort_by='고시가', sort_order='asc' if current_sort_by != '고시가' or current_sort_order == 'desc' else 'desc') }}" class="sort-link">
+                                        고시가
+                                        {% if current_sort_by == '고시가' %}
+                                            <span class="sort-icon">{{ '▲' if current_sort_order == 'asc' else '▼' }}</span>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th scope="col" class="table-header">
+                                    <a href="{{ url_for('index', keyword=keyword, sort_by='시트명', sort_order='asc' if current_sort_by != '시트명' or current_sort_order == 'desc' else 'desc') }}" class="sort-link">
+                                        시트명
+                                        {% if current_sort_by == '시트명' %}
+                                            <span class="sort-icon">{{ '▲' if current_sort_order == 'asc' else '▼' }}</span>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for item in results %}
+                            <tr>
+                                <td class="table-row-cell">{{ item.품목 }}</td>
+                                <td class="table-row-cell">{{ item.사이즈 }}</td>
+                                <td class="table-row-cell">{{ item.평량 }}</td>
+                                <td class="table-row-cell">{{ item.색상_및_패턴 }}</td>
+                                <td class="table-row-cell">{{ item.고시가 }}</td>
+                                <td class="table-row-cell">{{ item.시트명 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</body>
+</html>
