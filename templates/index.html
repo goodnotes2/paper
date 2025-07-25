@@ -181,6 +181,11 @@
                         <!-- 숨겨진 필드로 선택된 두께 값과 품목 정보를 전달 -->
                         <input type="hidden" id="seneca_selected_thickness_hidden" name="seneca_selected_thickness_hidden" value="{{ seneca_selected_thickness }}">
                         <input type="hidden" id="seneca_selected_product_info_hidden" name="seneca_selected_product_info_hidden" value="{{ seneca_selected_product_info }}">
+                        
+                        <!-- 현재 검색 키워드와 정렬 파라미터를 숨겨진 필드로 전달 -->
+                        <input type="hidden" id="current_search_keyword_hidden" name="keyword" value="{{ keyword }}">
+                        <input type="hidden" id="current_sort_by_hidden" name="sort_by" value="{{ current_sort_by }}">
+                        <input type="hidden" id="current_sort_order_hidden" name="sort_order" value="{{ current_sort_order }}">
                     </div>
                     <button type="submit" name="calculate_seneca_btn" class="calculator-button sm:w-auto w-full">계산</button>
                 </form>
@@ -352,7 +357,42 @@
                     window.location.href = newUrl.toString();
                 });
             });
+            
+            // 세네카 계산기 폼의 숨겨진 필드 업데이트 (페이지 로드 시)
+            updateSenecaFormHiddenFields();
+
+            // 검색 입력 필드 변경 시 숨겨진 필드 업데이트 (실시간)
+            const searchKeywordInput = document.querySelector('form input[name="keyword"]');
+            if (searchKeywordInput) {
+                searchKeywordInput.addEventListener('input', updateSenecaFormHiddenFields);
+            }
         });
+
+        // 세네카 계산기 폼의 숨겨진 필드를 현재 검색 상태로 업데이트하는 함수
+        function updateSenecaFormHiddenFields() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentKeyword = urlParams.get('keyword') || ''; // URL에서 키워드 가져오기
+            const currentSortBy = urlParams.get('sort_by') || '';
+            const currentSortOrder = urlParams.get('sort_order') || '';
+
+            // 검색 입력 필드의 현재 값도 반영 (사용자가 URL 파라미터 없이 직접 입력했을 경우)
+            const searchInput = document.querySelector('form input[name="keyword"]');
+            const actualKeyword = searchInput ? searchInput.value : currentKeyword;
+
+            const senecaFormKeywordHidden = document.getElementById('current_search_keyword_hidden');
+            const senecaFormSortByHidden = document.getElementById('current_sort_by_hidden');
+            const senecaFormSortOrderHidden = document.getElementById('current_sort_order_hidden');
+
+            if (senecaFormKeywordHidden) {
+                senecaFormKeywordHidden.value = actualKeyword;
+            }
+            if (senecaFormSortByHidden) {
+                senecaFormSortByHidden.value = currentSortBy;
+            }
+            if (senecaFormSortOrderHidden) {
+                senecaFormSortOrderHidden.value = currentSortOrder;
+            }
+        }
     </script>
 </body>
 </html>
