@@ -33,14 +33,14 @@
             max-width: 400px;
             text-align: center;
         }
-        .search-input {
+        .search-input, .calculator-input {
             border: 1px solid #d1d5db;
             border-radius: 0.5rem;
             padding: 0.75rem 1rem;
             font-size: 1rem;
             width: 100%;
         }
-        .search-button {
+        .search-button, .calculator-button {
             background-color: #3b82f6;
             color: white;
             padding: 0.75rem 1.5rem;
@@ -48,7 +48,7 @@
             font-weight: 600;
             transition: background-color 0.2s ease-in-out;
         }
-        .search-button:hover {
+        .search-button:hover, .calculator-button:hover {
             background-color: #2563eb;
         }
         .table-header {
@@ -100,6 +100,21 @@
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
+        /* 새 계산기 섹션을 위한 스타일 (빨간색 상자 시뮬레이션) */
+        .page-calculator-container {
+            background-color: #fff5f5; /* 연한 빨강 */
+            border: 2px solid #ef4444; /* 빨간색 테두리 */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        /* 선택된 품목 정보 표시 스타일 */
+        .selected-product-display {
+            font-size: 0.9rem;
+            color: #4b5563;
+            margin-top: 0.5rem;
+            min-height: 1.5rem; /* 내용이 없어도 공간 유지 */
+        }
     </style>
 </head>
 <body>
@@ -148,9 +163,63 @@
                 {% endif %}
             {% endwith %}
 
-            <div class="flex justify-center mb-8">
-                <img src="{{ url_for('static', filename=logo_path) }}" alt="Search Logo" class="max-w-xs h-auto rounded-lg shadow-md">
+            <!-- 로고와 페이지 수 계산기 섹션 (가로 배치) -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-8 mb-8">
+                <!-- 페이지 수 계산기 섹션 시작 (빨간 네모 위치) -->
+                <div class="page-calculator-container w-full sm:w-1/2 lg:w-1/3">
+                    <h2 class="text-xl font-bold text-red-800 mb-4">페이지 수 계산</h2>
+                    <form method="POST" action="{{ url_for('index') }}" class="space-y-4">
+                        <div>
+                            <label for="page_count_input" class="block text-sm font-medium text-gray-700 mb-1">페이지 수</label>
+                            <input type="number" step="1" id="page_count_input" name="page_count_input" placeholder="페이지 수를 입력하세요" value="{{ page_count_input }}"
+                                   class="calculator-input">
+                        </div>
+                        <button type="submit" name="calculate_page_btn" class="calculator-button w-full">계산</button>
+                    </form>
+                    {% if calculated_page_value is not none %}
+                        <p class="text-lg font-semibold text-red-800 mt-4">
+                            계산된 값: <span class="text-red-600">{{ calculated_page_value }}</span>
+                        </p>
+                    {% endif %}
+                </div>
+                <!-- 페이지 수 계산기 섹션 끝 -->
+
+                <!-- 로고 이미지 섹션 -->
+                <div class="flex-shrink-0">
+                    <img src="{{ url_for('static', filename=logo_path) }}" alt="Search Logo" class="max-w-xs h-auto rounded-lg shadow-md">
+                </div>
             </div>
+            <!-- 로고와 페이지 수 계산기 섹션 끝 -->
+
+
+            <!-- 세네카 계산기 섹션 시작 (수량(장)만 남기고 페이지로 변경) -->
+            <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">세네카 계산기</h2>
+                <form method="POST" action="{{ url_for('index') }}" class="flex flex-col sm:flex-row gap-4 mb-4 items-end justify-center">
+                    <div class="flex-1 max-w-xs">
+                        <label for="seneca_page_count" class="block text-sm font-medium text-gray-700 mb-1">페이지</label>
+                        <input type="number" step="1" id="seneca_page_count" name="seneca_page_count" placeholder="페이지 수를 입력하세요" value="{{ seneca_page_count }}"
+                               class="calculator-input">
+                        <!-- 숨겨진 필드로 선택된 두께 값과 품목 정보를 전달 -->
+                        <input type="hidden" id="seneca_selected_thickness_hidden" name="seneca_selected_thickness_hidden" value="{{ seneca_selected_thickness }}">
+                        <input type="hidden" id="seneca_selected_product_info_hidden" name="seneca_selected_product_info_hidden" value="{{ seneca_selected_product_info }}">
+                    </div>
+                    <button type="submit" name="calculate_seneca_btn" class="calculator-button sm:w-auto w-full">계산</button>
+                </form>
+                <p class="selected-product-display" id="seneca_selected_product_info_display">
+                    {% if seneca_selected_product_info %}
+                        선택된 품목: {{ seneca_selected_product_info }} (두께: {{ seneca_selected_thickness }})
+                    {% else %}
+                        계산을 위해 아래 표에서 품목을 선택해주세요.
+                    {% endif %}
+                </p>
+                {% if seneca_result is not none %}
+                    <p class="text-xl font-semibold text-gray-800 mt-4">
+                        계산 결과: <span class="text-blue-600">{{ seneca_result }}</span> 세네카
+                    </p>
+                {% endif %}
+            </div>
+            <!-- 세네카 계산기 섹션 끝 -->
 
             <form method="POST" action="{{ url_for('index') }}" class="flex gap-4 mb-8">
                 <input type="text" name="keyword" placeholder="품목 또는 시트명을 입력하세요..." value="{{ keyword }}"
@@ -200,6 +269,14 @@
                                     </a>
                                 </th>
                                 <th scope="col" class="table-header">
+                                    <a href="{{ url_for('index', keyword=keyword, sort_by='두께', sort_order='asc' if current_sort_by != '두께' or current_sort_order == 'desc' else 'desc') }}" class="sort-link">
+                                        두께 {# '두께' 컬럼 헤더 추가 #}
+                                        {% if current_sort_by == '두께' %}
+                                            <span class="sort-icon">{{ '▲' if current_sort_order == 'asc' else '▼' }}</span>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th scope="col" class="table-header">
                                     <a href="{{ url_for('index', keyword=keyword, sort_by='고시가', sort_order='asc' if current_sort_by != '고시가' or current_sort_order == 'desc' else 'desc') }}" class="sort-link">
                                         고시가
                                         {% if current_sort_by == '고시가' %}
@@ -219,11 +296,17 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             {% for item in results %}
-                            <tr>
+                            <tr class="cursor-pointer hover:bg-blue-50" 
+                                data-품목="{{ item.품목 }}" 
+                                data-사이즈="{{ item.사이즈 }}" 
+                                data-평량="{{ item.평량 }}" 
+                                data-두께="{{ item.두께 }}" 
+                                onclick="selectProductForSeneca(this)">
                                 <td class="table-row-cell">{{ item.품목 }}</td>
                                 <td class="table-row-cell">{{ item.사이즈 }}</td>
                                 <td class="table-row-cell">{{ item.평량 }}</td>
                                 <td class="table-row-cell">{{ item.색상_및_패턴 }}</td>
+                                <td class="table-row-cell">{{ item.두께 }}</td> {# '두께' 데이터 셀 추가 #}
                                 <td class="table-row-cell">{{ item.고시가 }}</td>
                                 <td class="table-row-cell">{{ item.시트명 }}</td>
                             </tr>
@@ -234,5 +317,64 @@
             {% endif %}
         </div>
     {% endif %}
+
+    <script>
+        // 검색 결과 행 클릭 시 세네카 계산기에 품목 정보 자동 채우기
+        function selectProductForSeneca(rowElement) {
+            const 품목 = rowElement.dataset.품목;
+            const 사이즈 = rowElement.dataset.사이즈;
+            const 평량 = rowElement.dataset.평량;
+            const 두께 = rowElement.dataset.두께;
+
+            // 세네카 계산기 입력 필드에 두께 값 채우기 (숨겨진 필드)
+            document.getElementById('seneca_selected_thickness_hidden').value = 두께;
+            
+            // 선택된 품목 정보를 표시하는 텍스트 업데이트
+            const productInfoDisplay = document.getElementById('seneca_selected_product_info_display');
+            document.getElementById('seneca_selected_product_info_hidden').value = `${품목} (${사이즈} / ${평량}g)`;
+            productInfoDisplay.textContent = `선택된 품목: ${품목} (${사이즈} / ${평량}g) (두께: ${두께})`;
+
+            // 두께 값이 없거나 'N/A'인 경우, 세네카 계산기 입력 필드를 비우고 품목 정보 표시 업데이트
+            if (!두께 || 두께 === 'N/A') {
+                document.getElementById('seneca_page_count').value = ''; // 페이지 입력 필드도 비움
+                productInfoDisplay.textContent = `선택된 품목: ${품목} (${사이즈} / ${평량}g) (두께 정보 없음)`;
+                document.getElementById('seneca_selected_thickness_hidden').value = ''; // 숨겨진 두께 필드도 비움
+            } else {
+                document.getElementById('seneca_selected_thickness_hidden').value = 두께;
+                productInfoDisplay.textContent = `선택된 품목: ${품목} (${사이즈} / ${평량}g) (두께: ${두께})`;
+            }
+        }
+
+        // 페이지 로드 시 정렬 링크 기능 활성화 (기존 코드)
+        document.addEventListener('DOMContentLoaded', function() {
+            const headers = document.querySelectorAll('th[data-sort-key]');
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const sortKey = this.dataset.sortKey;
+                    let sortOrder = 'asc';
+
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const currentSortBy = urlParams.get('sort_by');
+                    const currentSortOrder = urlParams.get('sort_order');
+
+                    if (currentSortBy === sortKey) {
+                        sortOrder = (currentSortOrder === 'asc' ? 'desc' : 'asc');
+                    }
+
+                    const keywordInput = document.querySelector('form input[name="keyword"]');
+                    const currentKeyword = keywordInput ? keywordInput.value : '';
+
+                    const newUrl = new URL(window.location.origin + window.location.pathname);
+                    if (currentKeyword) {
+                        newUrl.searchParams.set('keyword', currentKeyword);
+                    }
+                    newUrl.searchParams.set('sort_by', sortKey);
+                    newUrl.searchParams.set('sort_order', sortOrder);
+                    
+                    window.location.href = newUrl.toString();
+                });
+            });
+        });
+    </script>
 </body>
 </html>
