@@ -139,7 +139,7 @@ def index():
     seneca_selected_thickness = "" # 선택된 두께 값
     seneca_selected_product_info = "" # 선택된 품목 정보 (표시용)
 
-    # 페이지 수 계산 관련 변수 제거
+    # 페이지 수 계산 관련 변수 제거 (index 함수 내에서도 제거)
     # page_count_input = ""
     # calculated_page_value = None
 
@@ -157,26 +157,32 @@ def index():
         # 세네카 계산 폼 제출 처리
         elif 'calculate_seneca_btn' in request.form and authenticated:
             seneca_page_count = request.form.get('seneca_page_count', '').strip()
-            seneca_selected_thickness = request.form.get('seneca_selected_thickness_hidden', '').strip() # 숨겨진 필드에서 두께 값 가져옴
-            seneca_selected_product_info = request.form.get('seneca_selected_product_info_hidden', '').strip() # 숨겨진 필드에서 품목 정보 가져옴
+            seneca_selected_thickness = request.form.get('seneca_selected_thickness_hidden', '').strip() 
+            seneca_selected_product_info = request.form.get('seneca_selected_product_info_hidden', '').strip() 
             
             if seneca_page_count and seneca_selected_thickness and seneca_selected_thickness != 'N/A':
                 seneca_result = calculate_seneca(seneca_page_count, seneca_selected_thickness)
             else:
                 flash("세네카 계산을 위한 페이지 수와 유효한 품목 두께를 선택해주세요.", 'info')
                 seneca_result = "값 부족 또는 품목 미선택"
+            
+            # 계산 후 현재 상태를 유지하며 페이지 렌더링
+            return render_template('index.html', 
+                                   authenticated=authenticated,
+                                   seneca_result=seneca_result, 
+                                   seneca_page_count=seneca_page_count, 
+                                   seneca_selected_thickness=seneca_selected_thickness, 
+                                   seneca_selected_product_info=seneca_selected_product_info,
+                                   # 검색 결과 및 키워드 등은 POST 요청 시 다시 로드되지 않으므로 초기화
+                                   results=[], keyword="", message="", logo_path=image_file_name,
+                                   current_sort_by=None, current_sort_order=None)
         
         # 페이지 수 계산 폼 제출 처리 로직 제거
         # elif 'calculate_page_btn' in request.form and authenticated:
-        #     page_count_input = request.form.get('page_count_input', '').strip()
-        #     
-        #     if page_count_input:
-        #         calculated_page_value = calculate_page_cost(page_count_input)
-        #     else:
-        #         flash("페이지 수를 입력해주세요.", 'info')
-        #         calculated_page_value = "값 부족"
+        #     ... (로직 제거) ...
+        #     return render_template(...)
 
-        # 이미 인증된 상태에서 검색 폼 제출 처리 (세네카 계산 폼이 아니면서 POST 요청인 경우)
+        # 검색 폼 제출 처리 (가장 일반적인 POST 요청)
         elif authenticated: 
             search_results = []
             search_keyword = request.form.get('keyword', '').strip()
@@ -185,7 +191,7 @@ def index():
             sort_by = request.args.get('sort_by')
             sort_order = request.args.get('sort_order', 'asc')
 
-            result_df = df_all.copy()
+            result_df = pd.DataFrame()
 
             if not search_keyword:
                 result_df = df_all.copy()
@@ -250,8 +256,9 @@ def index():
                                    seneca_result=seneca_result, 
                                    seneca_page_count=seneca_page_count, 
                                    seneca_selected_thickness=seneca_selected_thickness, 
-                                   seneca_selected_product_info=seneca_selected_product_info) # page_count_input, calculated_page_value 제거
+                                   seneca_selected_product_info=seneca_selected_product_info)
         else:
+            # 인증되지 않은 상태에서 POST 요청이 오면 비밀번호 입력 화면을 다시 보여줌
             return render_template('index.html', authenticated=False)
 
     # GET 요청 처리 (초기 로드, 정렬 또는 계산 후 리다이렉트)
@@ -331,7 +338,7 @@ def index():
                                    seneca_result=seneca_result, 
                                    seneca_page_count=seneca_page_count, 
                                    seneca_selected_thickness=seneca_selected_thickness, 
-                                   seneca_selected_product_info=seneca_selected_product_info) # page_count_input, calculated_page_value 제거
+                                   seneca_selected_product_info=seneca_selected_product_info)
 
 if __name__ == '__main__':
     app.run(debug=True)
