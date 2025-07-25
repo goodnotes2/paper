@@ -145,9 +145,15 @@ def index():
 
     # 검색 관련 변수 초기화 (POST/GET 공통으로 사용)
     search_results = []
-    search_keyword = ""
     message = ""
-    sort_by = request.args.get('sort_by') # GET 요청의 정렬 파라미터
+    
+    # search_keyword는 POST/GET 요청 모두에서 가져올 수 있도록 처리
+    # POST 요청의 경우, 폼 데이터에서 'keyword'를 가져옴
+    # GET 요청의 경우, URL 파라미터에서 'keyword'를 가져옴
+    search_keyword = request.form.get('keyword', '').strip() if request.method == 'POST' else request.args.get('keyword', '').strip()
+    
+    # 정렬 파라미터는 항상 URL에서 가져옴 (정렬 링크는 GET 요청)
+    sort_by = request.args.get('sort_by')
     sort_order = request.args.get('sort_order', 'asc')
 
     if request.method == 'POST':
@@ -177,23 +183,25 @@ def index():
                 flash("세네카 계산을 위한 페이지 수와 유효한 품목 두께를 선택해주세요.", 'info')
                 seneca_result = "값 부족 또는 품목 미선택"
             
-            # 계산 후에도 검색 목록을 유지하기 위해 현재 키워드를 가져옴
-            search_keyword = request.form.get('keyword', '').strip() # 계산 폼에 숨겨진 키워드 필드가 있다면 가져옴
-
+            # 세네카 계산 후에도 검색 목록을 유지하기 위해 search_keyword는 이미 위에서 가져왔고,
+            # 아래 공통 검색 로직에서 이를 활용합니다.
+            
         # 3. 메인 검색 폼 제출 처리 (calculate_seneca_btn이 아니면서 keyword가 있는 경우)
-        elif 'keyword' in request.form: 
-            search_keyword = request.form.get('keyword', '').strip()
+        # 이 부분은 이제 'elif' 대신 'else'로 처리하여 모든 POST 요청이 검색 로직으로 이어지도록 합니다.
+        # 즉, 계산 폼 제출 후에도 검색 로직이 실행되어 목록을 다시 채웁니다.
+        # 'keyword'는 이미 함수 상단에서 request.form에서 가져왔으므로, 여기서는 별도 처리가 필요 없습니다.
+        # 모든 POST 요청은 아래 공통 검색 로직으로 이어집니다.
+        pass # 이 pass는 실제로는 필요 없지만, 구조를 명확히 하기 위해 남겨둠
 
-    # --- 공통 로직: 인증된 사용자일 경우 검색 결과 생성 및 템플릿 렌더링 ---
+    # --- 공통 검색 로직 (모든 인증된 GET/POST 요청에서 실행) ---
     if authenticated:
-        # 검색어가 없으면 초기 상태 또는 전체 데이터 (정렬 적용)
         if df_all.empty:
             message = "로드된 데이터가 없습니다. 검색을 수행할 수 없습니다."
             result_df = pd.DataFrame() 
         else:
-            if not search_keyword:
+            if not search_keyword: # 검색어가 없으면 전체 데이터 또는 초기 상태
                 result_df = df_all.copy()
-            else:
+            else: # 검색어가 있으면 검색 수행
                 # 시트 이름과 정확히 일치하는지 확인
                 if search_keyword in sheets:
                     result_df = df_all[df_all['시트명'].astype(str).str.lower() == search_keyword.lower()].copy()
@@ -238,7 +246,7 @@ def index():
                         '평량': row.get('평량', 'N/A'),
                         '색상_및_패턴': row.get('색상 및 패턴', 'N/A'),
                         '고시가': formatted_고시가,
-                        '두께': thickness_value, 
+                        '두께': thickness_value, # '두께' 데이터 추가
                         '시트명': row.get('시트명', 'N/A')
                     })
             
@@ -246,9 +254,9 @@ def index():
         logo_path = image_file_name 
         return render_template('index.html', 
                                authenticated=authenticated,
-                               results=search_results, 
-                               keyword=search_keyword, 
-                               message=message,
+                               results=search_results, # 이제 올바르게 채워진 검색 결과
+                               keyword=search_keyword, # 이제 올바르게 유지되는 검색 키워드
+                               message=message, # 이제 올바르게 유지되는 메시지
                                logo_path=logo_path,
                                current_sort_by=sort_by,
                                current_sort_order=sort_order,
