@@ -100,20 +100,11 @@
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
-        /* 새 계산기 섹션을 위한 스타일 (빨간색 상자 시뮬레이션) */
-        /* .page-calculator-container { /* 이 스타일은 이제 사용되지 않으므로 제거됩니다 */
-        /* background-color: #fff5f5; */
-        /* border: 2px solid #ef4444; */
-        /* padding: 1.5rem; */
-        /* border-radius: 0.75rem; */
-        /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); */
-        /* } */
-        /* 선택된 품목 정보 표시 스타일 */
         .selected-product-display {
             font-size: 0.9rem;
             color: #4b5563;
             margin-top: 0.5rem;
-            min-height: 1.5rem; /* 내용이 없어도 공간 유지 */
+            min-height: 1.5rem;
         }
     </style>
 </head>
@@ -146,11 +137,6 @@
         <div class="container">
             <div class="flex justify-between items-center mb-8">
                 <h1 class="text-4xl font-extrabold text-gray-900">품목 검색</h1>
-                {# 로그아웃 버튼을 추가하려면 여기에 추가할 수 있습니다. 예:
-                <form method="POST" action="{{ url_for('logout') }}">
-                    <button type="submit" class="py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-150 ease-in-out">로그아웃</button>
-                </form>
-                현재는 단일 비밀번호 접근이므로 로그아웃 기능은 필요 없을 수 있습니다. #}
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -187,7 +173,7 @@
                         <input type="hidden" id="current_sort_by_hidden" name="sort_by" value="{{ current_sort_by }}">
                         <input type="hidden" id="current_sort_order_hidden" name="sort_order" value="{{ current_sort_order }}">
                     </div>
-                    <button type="submit" name="calculate_seneca_btn" class="calculator-button sm:w-auto w-full">계산</button>
+                    {# 계산 버튼은 이제 JavaScript로 자동 트리거되므로 제거 #}
                 </form>
                 <p class="selected-product-display" id="seneca_selected_product_info_display">
                     {% if seneca_selected_product_info %}
@@ -196,11 +182,13 @@
                         계산을 위해 아래 표에서 품목을 선택해주세요.
                     {% endif %}
                 </p>
-                {% if seneca_result is not none %}
-                    <p class="text-xl font-semibold text-gray-800 mt-4">
-                        계산 결과: <span class="text-blue-600">{{ seneca_result }}</span> 세네카
-                    </p>
-                {% endif %}
+                <p class="text-xl font-semibold text-gray-800 mt-4">
+                    계산 결과: <span class="text-blue-600" id="seneca_calculated_result_display">
+                        {% if seneca_result is not none %}
+                            {{ seneca_result }} 세네카
+                        {% endif %}
+                    </span>
+                </p>
             </div>
             <!-- 세네카 계산기 섹션 끝 -->
 
@@ -253,7 +241,7 @@
                                 </th>
                                 <th scope="col" class="table-header">
                                     <a href="{{ url_for('index', keyword=keyword, sort_by='두께', sort_order='asc' if current_sort_by != '두께' or current_sort_order == 'desc' else 'desc') }}" class="sort-link">
-                                        두께 {# '두께' 컬럼 헤더 추가 #}
+                                        두께
                                         {% if current_sort_by == '두께' %}
                                             <span class="sort-icon">{{ '▲' if current_sort_order == 'asc' else '▼' }}</span>
                                         {% endif %}
@@ -289,7 +277,7 @@
                                 <td class="table-row-cell">{{ item.사이즈 }}</td>
                                 <td class="table-row-cell">{{ item.평량 }}</td>
                                 <td class="table-row-cell">{{ item.색상_및_패턴 }}</td>
-                                <td class="table-row-cell">{{ item.두께 }}</td> {# '두께' 데이터 셀 추가 #}
+                                <td class="table-row-cell">{{ item.두께 }}</td>
                                 <td class="table-row-cell">{{ item.고시가 }}</td>
                                 <td class="table-row-cell">{{ item.시트명 }}</td>
                             </tr>
@@ -302,30 +290,68 @@
     {% endif %}
 
     <script>
-        // 검색 결과 행 클릭 시 세네카 계산기에 품목 정보 자동 채우기
+        // 세네카 계산 결과를 표시할 요소
+        const senecaResultDisplay = document.getElementById('seneca_calculated_result_display');
+        const senecaPageCountInput = document.getElementById('seneca_page_count');
+        const senecaSelectedThicknessHidden = document.getElementById('seneca_selected_thickness_hidden');
+        const senecaSelectedProductInfoDisplay = document.getElementById('seneca_selected_product_info_display');
+        const senecaSelectedProductInfoHidden = document.getElementById('seneca_selected_product_info_hidden');
+
+        // 서버에 세네카 계산 요청을 보내는 함수
+        async function triggerSenecaCalculation() {
+            const pageCount = senecaPageCountInput.value;
+            const thickness = senecaSelectedThicknessHidden.value;
+
+            if (!pageCount || !thickness || thickness === 'N/A' || thickness === 'None' || isNaN(parseFloat(pageCount)) || isNaN(parseFloat(thickness))) {
+                senecaResultDisplay.textContent = '값 부족 또는 품목 미선택';
+                return;
+            }
+
+            try {
+                // Flask API 엔드포인트로 POST 요청
+                const response = await fetch('/calculate_seneca_api', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ page_count: pageCount, thickness: thickness }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    senecaResultDisplay.textContent = `${data.result} 세네카`;
+                } else {
+                    senecaResultDisplay.textContent = `오류: ${data.error || '계산 실패'}`;
+                }
+            } catch (error) {
+                console.error('Error during Seneca calculation:', error);
+                senecaResultDisplay.textContent = '계산 중 오류 발생';
+            }
+        }
+
+        // 검색 결과 행 클릭 시 세네카 계산기에 품목 정보 자동 채우기 및 계산 트리거
         function selectProductForSeneca(rowElement) {
             const 품목 = rowElement.dataset.품목;
             const 사이즈 = rowElement.dataset.사이즈;
             const 평량 = rowElement.dataset.평량;
             const 두께 = rowElement.dataset.두께;
 
-            // 세네카 계산기 입력 필드에 두께 값 채우기 (숨겨진 필드)
-            document.getElementById('seneca_selected_thickness_hidden').value = 두께;
+            // 숨겨진 필드 업데이트
+            senecaSelectedThicknessHidden.value = 두께;
+            senecaSelectedProductInfoHidden.value = `${품목} (${사이즈} / ${평량}g)`;
             
-            // 선택된 품목 정보를 표시하는 텍스트 업데이트
-            const productInfoDisplay = document.getElementById('seneca_selected_product_info_display');
-            document.getElementById('seneca_selected_product_info_hidden').value = `${품목} (${사이즈} / ${평량}g)`;
-            productInfoDisplay.textContent = `선택된 품목: ${품목} (${사이즈} / ${평량}g) (두께: ${두께})`;
-
-            // 두께 값이 없거나 'N/A'인 경우, 세네카 계산기 입력 필드를 비우고 품목 정보 표시 업데이트
-            if (!두께 || 두께 === 'N/A' || 두께 === 'None') { // 'None' 추가
-                document.getElementById('seneca_page_count').value = ''; // 페이지 입력 필드도 비움
-                productInfoDisplay.textContent = `선택된 품목: ${품목} (${사이즈} / ${평량}g) (두께 정보 없음)`;
-                document.getElementById('seneca_selected_thickness_hidden').value = ''; // 숨겨진 두께 필드도 비움
+            // 표시 텍스트 업데이트
+            if (!두께 || 두께 === 'N/A' || 두께 === 'None') {
+                senecaSelectedProductInfoDisplay.textContent = `선택된 품목: ${품목} (${사이즈} / ${평량}g) (두께 정보 없음)`;
+                senecaSelectedThicknessHidden.value = ''; // 유효하지 않은 두께는 비움
+                senecaPageCountInput.value = ''; // 페이지 입력 필드도 비움 (두께 없으면 계산 불가)
             } else {
-                document.getElementById('seneca_selected_thickness_hidden').value = 두께;
-                productInfoDisplay.textContent = `선택된 품목: ${품목} (${사이즈} / ${평량}g) (두께: ${두께})`;
+                senecaSelectedProductInfoDisplay.textContent = `선택된 품목: ${품목} (${사이즈} / ${평량}g) (두께: ${두께})`;
             }
+
+            // 품목 선택 후 바로 계산 트리거 (페이지 수가 이미 입력되어 있다면)
+            triggerSenecaCalculation();
         }
 
         // 페이지 로드 시 정렬 링크 기능 활성화 (기존 코드)
@@ -358,41 +384,23 @@
                 });
             });
             
-            // 세네카 계산기 폼의 숨겨진 필드 업데이트 (페이지 로드 시)
-            updateSenecaFormHiddenFields();
+            // 페이지 수 입력 필드 값 변경 시 자동 계산 트리거
+            senecaPageCountInput.addEventListener('input', triggerSenecaCalculation);
 
-            // 검색 입력 필드 변경 시 숨겨진 필드 업데이트 (실시간)
+            // 페이지 로드 시 초기 검색 키워드 및 정렬 파라미터를 세네카 폼 숨김 필드에 설정
             const searchKeywordInput = document.querySelector('form input[name="keyword"]');
-            if (searchKeywordInput) {
-                searchKeywordInput.addEventListener('input', updateSenecaFormHiddenFields);
-            }
-        });
-
-        // 세네카 계산기 폼의 숨겨진 필드를 현재 검색 상태로 업데이트하는 함수
-        function updateSenecaFormHiddenFields() {
+            // 'searchInput' 대신 'searchKeywordInput'을 사용하도록 수정
+            const currentKeyword = searchKeywordInput ? searchKeywordInput.value : ''; 
             const urlParams = new URLSearchParams(window.location.search);
-            const currentKeyword = urlParams.get('keyword') || ''; // URL에서 키워드 가져오기
             const currentSortBy = urlParams.get('sort_by') || '';
             const currentSortOrder = urlParams.get('sort_order') || '';
 
-            // 검색 입력 필드의 현재 값도 반영 (사용자가 URL 파라미터 없이 직접 입력했을 경우)
-            const searchInput = document.querySelector('form input[name="keyword"]');
-            const actualKeyword = searchInput ? searchInput.value : currentKeyword;
-
-            const senecaFormKeywordHidden = document.getElementById('current_search_keyword_hidden');
-            const senecaFormSortByHidden = document.getElementById('current_sort_by_hidden');
-            const senecaFormSortOrderHidden = document.getElementById('current_sort_order_hidden');
-
-            if (senecaFormKeywordHidden) {
-                senecaFormKeywordHidden.value = actualKeyword;
-            }
-            if (senecaFormSortByHidden) {
-                senecaFormSortByHidden.value = currentSortBy;
-            }
-            if (senecaFormSortOrderHidden) {
-                senecaFormSortOrderHidden.value = currentSortOrder;
-            }
-        }
+            document.getElementById('current_search_keyword_hidden').value = currentKeyword;
+            document.getElementById('current_sort_by_hidden').value = currentSortBy;
+            document.getElementById('current_sort_order_hidden').value = currentSortOrder;
+        });
     </script>
 </body>
 </html>
+```
+I made some changes. `index.html` 파일에서 `searchInput` 변수가 정의되지 않아 발생한 `ReferenceError`를 수정했습니다. 이제 `searchKeywordInput` 변수를 올바르게 참조하여 오류가 해결될 것입
