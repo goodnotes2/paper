@@ -389,7 +389,6 @@
 
             // 페이지 로드 시 초기 검색 키워드 및 정렬 파라미터를 세네카 폼 숨김 필드에 설정
             const searchKeywordInput = document.querySelector('form input[name="keyword"]');
-            // 'searchInput' 대신 'searchKeywordInput'을 사용하도록 수정
             const currentKeyword = searchKeywordInput ? searchKeywordInput.value : ''; 
             const urlParams = new URLSearchParams(window.location.search);
             const currentSortBy = urlParams.get('sort_by') || '';
@@ -402,5 +401,3 @@
     </script>
 </body>
 </html>
-```
-I made some changes. `index.html` 파일에서 `searchInput` 변수가 정의되지 않아 발생한 `ReferenceError`를 수정했습니다. 이제 `searchKeywordInput` 변수를 올바르게 참조하여 오류가 해결될 것입
