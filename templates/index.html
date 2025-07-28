@@ -159,7 +159,7 @@
                 <!-- 세네카 계산기 섹션 시작 (오른쪽) -->
                 <div class="bg-gray-50 p-6 rounded-lg shadow-inner w-full sm:w-2/3">
                     <h2 class="text-2xl font-bold text-gray-800 mb-4">세네카 계산기</h2>
-                    <form method="POST" action="{{ url_for('index') }}" class="flex flex-col sm:flex-row gap-4 mb-4 items-end justify-center">
+                    <form id="seneca_calculator_form" method="POST" action="{{ url_for('index') }}" class="flex flex-col sm:flex-row gap-4 mb-4 items-end justify-center">
                         <div class="flex-1 max-w-xs">
                             <label for="seneca_page_count" class="block text-sm font-medium text-gray-700 mb-1">페이지</label>
                             <input type="number" step="1" id="seneca_page_count" name="seneca_page_count" placeholder="페이지 수를 입력하세요" value="{{ seneca_page_count }}"
@@ -349,6 +349,7 @@
                 senecaSelectedThicknessHidden.value = ''; // 유효하지 않은 두께는 비움
                 senecaPageCountInput.value = ''; // 페이지 입력 필드도 비움 (두께 없으면 계산 불가)
             } else {
+                senecaSelectedThicknessHidden.value = 두께;
                 senecaSelectedProductInfoDisplay.textContent = `선택된 품목: ${품목} (${사이즈} / ${평량}g) (두께: ${두께})`;
             }
 
