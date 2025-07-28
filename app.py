@@ -2,6 +2,9 @@
 import pandas as pd
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify # jsonify 임포트
+import sys # sys 모듈 임포트 확인
+import traceback # traceback 모듈 임포트 추가
+import base64 
 
 app = Flask(__name__)
 
