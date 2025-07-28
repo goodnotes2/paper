@@ -1,10 +1,7 @@
 # app.py
 import pandas as pd
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-import sys
-import traceback
-import base64 
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify # jsonify 임포트
 
 app = Flask(__name__)
 
@@ -139,10 +136,6 @@ def index():
     seneca_selected_thickness = "" # 선택된 두께 값
     seneca_selected_product_info = "" # 선택된 품목 정보 (표시용)
 
-    # 페이지 수 계산 관련 변수 제거 (index 함수 내에서도 제거)
-    # page_count_input = ""
-    # calculated_page_value = None
-
     # 검색 관련 변수 초기화 (POST/GET 공통으로 사용)
     search_results = []
     message = ""
@@ -171,26 +164,9 @@ def index():
         if not authenticated:
             return render_template('index.html', authenticated=False)
 
-        # 2. 세네카 계산 폼 제출 처리
-        if 'calculate_seneca_btn' in request.form:
-            seneca_page_count = request.form.get('seneca_page_count', '').strip()
-            seneca_selected_thickness = request.form.get('seneca_selected_thickness_hidden', '').strip() 
-            seneca_selected_product_info = request.form.get('seneca_selected_product_info_hidden', '').strip() 
-            
-            if seneca_page_count and seneca_selected_thickness and seneca_selected_thickness != 'N/A':
-                seneca_result = calculate_seneca(seneca_page_count, seneca_selected_thickness)
-            else:
-                flash("세네카 계산을 위한 페이지 수와 유효한 품목 두께를 선택해주세요.", 'info')
-                seneca_result = "값 부족 또는 품목 미선택"
-            
-            # 세네카 계산 후에도 검색 목록을 유지하기 위해 search_keyword는 이미 위에서 가져왔고,
-            # 아래 공통 검색 로직에서 이를 활용합니다.
-            
-        # 3. 메인 검색 폼 제출 처리 (calculate_seneca_btn이 아니면서 keyword가 있는 경우)
-        # 이 부분은 이제 'elif' 대신 'else'로 처리하여 모든 POST 요청이 검색 로직으로 이어지도록 합니다.
-        # 즉, 계산 폼 제출 후에도 검색 로직이 실행되어 목록을 다시 채웁니다.
-        # 'keyword'는 이미 함수 상단에서 request.form에서 가져왔으므로, 여기서는 별도 처리가 필요 없습니다.
-        # 모든 POST 요청은 아래 공통 검색 로직으로 이어집니다.
+        # 2. 메인 검색 폼 제출 처리 (POST 요청)
+        # 세네카 계산은 이제 API 엔드포인트로 별도 처리되므로, 이곳에서는 검색만 처리
+        # search_keyword는 이미 함수 상단에서 request.form에서 가져왔으므로, 여기서는 별도 처리가 필요 없습니다.
         pass # 이 pass는 실제로는 필요 없지만, 구조를 명확히 하기 위해 남겨둠
 
     # --- 공통 검색 로직 (모든 인증된 GET/POST 요청에서 실행) ---
@@ -250,7 +226,7 @@ def index():
                         '시트명': row.get('시트명', 'N/A')
                     })
             
-        # 모든 POST/GET 요청의 마지막에 템플릿 렌더링
+        # 모든 인증된 요청의 마지막에 템플릿 렌더링
         logo_path = image_file_name 
         return render_template('index.html', 
                                authenticated=authenticated,
@@ -260,13 +236,30 @@ def index():
                                logo_path=logo_path,
                                current_sort_by=sort_by,
                                current_sort_order=sort_order,
-                               seneca_result=seneca_result, 
+                               seneca_result=seneca_result, # 세네카 결과는 이제 API에서 직접 업데이트되므로 초기값만 전달
                                seneca_page_count=seneca_page_count, 
                                seneca_selected_thickness=seneca_selected_thickness, 
                                seneca_selected_product_info=seneca_selected_product_info)
     else:
         # 인증되지 않은 사용자에게 비밀번호 입력 화면 렌더링
         return render_template('index.html', authenticated=False)
+
+# --- 새로운 API 엔드포인트: 세네카 계산을 위한 비동기 요청 처리 ---
+@app.route('/calculate_seneca_api', methods=['POST'])
+def calculate_seneca_api():
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.get_json()
+    page_count = data.get('page_count', '').strip()
+    thickness = data.get('thickness', '').strip()
+
+    if not page_count or not thickness or thickness == 'N/A' or thickness == 'None':
+        return jsonify({'error': '세네카 계산을 위한 페이지 수와 유효한 품목 두께를 입력해주세요.'}), 400
+    
+    seneca_result = calculate_seneca(page_count, thickness)
+    return jsonify({'result': seneca_result})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
