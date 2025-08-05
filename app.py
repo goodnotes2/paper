@@ -1,9 +1,9 @@
 # app.py
 import pandas as pd
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify # jsonify 임포트
-import sys # sys 모듈 임포트 확인
-import traceback # traceback 모듈 임포트 추가
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import sys
+import traceback
 import base64 
 
 app = Flask(__name__)
@@ -22,7 +22,8 @@ except Exception as e:
 # --- Configuration ---
 excel_file_name = 'search.xlsx'
 image_file_name = 'search.png' 
-sheets = ['두성', '삼원', '한국', '무림', '삼화', '서경', '한솔'] 
+# 시트 목록: '전주' 시트가 새로 추가되었습니다.
+sheets = ['두성', '삼원', '한국', '무림', '삼화', '서경', '한솔', '전주'] 
 
 # --- Access Password ---
 ACCESS_PASSWORD = os.environ.get('APP_ACCESS_PASSWORD', 'your_secret_password_default') 
@@ -53,7 +54,7 @@ def load_data():
                         break
                 
                 if not found_spaced_품목 and '품' in df.columns and '목' in df.columns:
-                    df['품목'] = (df['품'].fillna('') + df['품'].fillna('')).replace('', '알 수 없음') # '품'과 '목' 컬럼을 합쳐 '품목' 생성
+                    df['품목'] = (df['품'].fillna('') + df['품'].fillna('')).replace('', '알 수 없음') 
                 elif not found_spaced_품목:
                     df['품목'] = "알 수 없음"
             
@@ -69,9 +70,6 @@ def load_data():
             if '색상 및 패턴' in df.columns:
                 df['색상 및 패턴'] = df['색상 및 패턴'].fillna(method='ffill')
             
-            # '두께' 컬럼은 ffill 없이 로드됩니다 (엑셀에 있는 그대로).
-            # '두께' 컬럼이 존재한다면, 나중에 검색 결과에 포함됩니다.
-
             df['시트명'] = sheet
             data.append(df)
             print(f"[DEBUG] Sheet '{sheet}' loaded successfully.", file=sys.stderr)
@@ -97,91 +95,71 @@ def calculate_seneca(page_count, thickness):
     결과값은 소수점 첫째 자리까지 반올림하여 표시합니다.
     """
     try:
-        pc = float(page_count) # 페이지 수는 소수점도 가능하게 float으로 받습니다.
-        t = float(thickness)   # 두께도 소수점 가능하게 float으로 받습니다.
+        pc = float(page_count) 
+        t = float(thickness)   
         
-        if t == 0: # 두께가 0이면 0으로 나누기 오류 방지
+        if t == 0: 
             return "두께는 0이 될 수 없습니다."
 
-        seneca_result = (pc / 2) * t / 1000 # 새로운 계산식 적용
-        return f"{seneca_result:,.1f}" # 소수점 첫째 자리까지 콤마 포맷팅 및 반올림
+        seneca_result = (pc / 2) * t / 1000 
+        return f"{seneca_result:,.1f}" 
     except ValueError:
         return "유효한 숫자 값을 입력해주세요."
     except Exception as e:
         return f"계산 오류: {e}"
-
-# --- Page Cost Calculation Function (이 함수는 이제 사용되지 않으므로 제거됩니다) ---
-# def calculate_page_cost(page_count):
-#     """
-#     페이지 수 기반 계산 로직을 여기에 구현합니다.
-#     아직 검색된 종이 정보와 연동되지 않은 단순 플레이스홀더입니다.
-#     """
-#     try:
-#         pc = int(page_count)
-#         # TODO: 실제 페이지 수 기반 계산 공식을 여기에 적용하세요.
-#         # 예시: 페이지 수 * 100 (단순 예시)
-#         calculated_value = pc * 100
-#         return f"{calculated_value:,.0f} 원" # 정수로 콤마 포맷팅
-#     except ValueError:
-#         return "유효한 페이지 수를 입력해주세요."
-#     except Exception as e:
-#         return f"계산 오류: {e}"
-
 
 # --- Web Routes ---
 @app.route('/', methods=['GET', 'POST'])
 def index():
     authenticated = session.get('authenticated', False)
     
-    # 세네카 계산 결과 및 입력값 초기화
     seneca_result = None
     seneca_page_count = "" 
-    seneca_selected_thickness = "" # 선택된 두께 값
-    seneca_selected_product_info = "" # 선택된 품목 정보 (표시용)
+    seneca_selected_thickness = "" 
+    seneca_selected_product_info = "" 
 
-    # 검색 관련 변수 초기화 (POST/GET 공통으로 사용)
     search_results = []
     message = ""
     
-    # search_keyword는 POST/GET 요청 모두에서 가져올 수 있도록 처리
-    # POST 요청의 경우, 폼 데이터에서 'keyword'를 가져옴
-    # GET 요청의 경우, URL 파라미터에서 'keyword'를 가져옴
     search_keyword = request.form.get('keyword', '').strip() if request.method == 'POST' else request.args.get('keyword', '').strip()
     
-    # 정렬 파라미터는 항상 URL에서 가져옴 (정렬 링크는 GET 요청)
     sort_by = request.args.get('sort_by')
     sort_order = request.args.get('sort_order', 'asc')
 
     if request.method == 'POST':
-        # 1. 비밀번호 제출 처리
         if 'password' in request.form:
             entered_password = request.form.get('password')
             if entered_password == ACCESS_PASSWORD:
                 session['authenticated'] = True
-                return redirect(url_for('index')) # 비밀번호 입력 후 GET으로 리다이렉트
+                return redirect(url_for('index')) 
             else:
                 flash('비밀번호가 틀렸습니다.', 'danger')
                 return render_template('index.html', authenticated=False)
         
-        # 인증되지 않은 상태에서 다른 POST 요청이 오면 비밀번호 입력 화면을 다시 보여줌
         if not authenticated:
             return render_template('index.html', authenticated=False)
 
-        # 2. 메인 검색 폼 제출 처리 (POST 요청)
-        # 세네카 계산은 이제 API 엔드포인트로 별도 처리되므로, 이곳에서는 검색만 처리
-        # search_keyword는 이미 함수 상단에서 request.form에서 가져왔으므로, 여기서는 별도 처리가 필요 없습니다.
-        pass # 이 pass는 실제로는 필요 없지만, 구조를 명확히 하기 위해 남겨둠
+        if 'calculate_seneca_btn' in request.form:
+            seneca_page_count = request.form.get('seneca_page_count', '').strip()
+            seneca_selected_thickness = request.form.get('seneca_selected_thickness_hidden', '').strip() 
+            seneca_selected_product_info = request.form.get('seneca_selected_product_info_hidden', '').strip() 
+            
+            if seneca_page_count and seneca_selected_thickness and seneca_selected_thickness != 'N/A':
+                seneca_result = calculate_seneca(seneca_page_count, seneca_selected_thickness)
+            else:
+                flash("세네카 계산을 위한 페이지 수와 유효한 품목 두께를 선택해주세요.", 'info')
+                seneca_result = "값 부족 또는 품목 미선택"
+            
+        pass 
 
-    # --- 공통 검색 로직 (모든 인증된 GET/POST 요청에서 실행) ---
     if authenticated:
         if df_all.empty:
             message = "로드된 데이터가 없습니다. 검색을 수행할 수 없습니다."
             result_df = pd.DataFrame() 
         else:
-            if not search_keyword: # 검색어가 없으면 전체 데이터 또는 초기 상태
+            if not search_keyword: 
                 result_df = df_all.copy()
-            else: # 검색어가 있으면 검색 수행
-                # 시트 이름과 정확히 일치하는지 확인
+            else: 
                 if search_keyword in sheets:
                     result_df = df_all[df_all['시트명'].astype(str).str.lower() == search_keyword.lower()].copy()
                 elif '품목' not in df_all.columns:
@@ -193,7 +171,6 @@ def index():
             if result_df.empty and not message:
                 message = f"'{search_keyword}'에 대한 검색 결과가 없습니다."
             
-            # 정렬 적용
             if not result_df.empty and sort_by:
                 if sort_by in ['평량', '고시가', '두께']: 
                     result_df[f'{sort_by}_sortable'] = pd.to_numeric(result_df[sort_by], errors='coerce')
@@ -225,29 +202,27 @@ def index():
                         '평량': row.get('평량', 'N/A'),
                         '색상_및_패턴': row.get('색상 및 패턴', 'N/A'),
                         '고시가': formatted_고시가,
-                        '두께': thickness_value, # '두께' 데이터 추가
+                        '두께': thickness_value, 
                         '시트명': row.get('시트명', 'N/A')
                     })
             
-        # 모든 인증된 요청의 마지막에 템플릿 렌더링
         logo_path = image_file_name 
         return render_template('index.html', 
                                authenticated=authenticated,
-                               results=search_results, # 이제 올바르게 채워진 검색 결과
-                               keyword=search_keyword, # 이제 올바르게 유지되는 검색 키워드
-                               message=message, # 이제 올바르게 유지되는 메시지
+                               results=search_results, 
+                               keyword=search_keyword, 
+                               message=message, 
                                logo_path=logo_path,
                                current_sort_by=sort_by,
                                current_sort_order=sort_order,
-                               seneca_result=seneca_result, # 세네카 결과는 이제 API에서 직접 업데이트되므로 초기값만 전달
+                               seneca_result=seneca_result, 
                                seneca_page_count=seneca_page_count, 
                                seneca_selected_thickness=seneca_selected_thickness, 
                                seneca_selected_product_info=seneca_selected_product_info)
     else:
-        # 인증되지 않은 사용자에게 비밀번호 입력 화면 렌더링
         return render_template('index.html', authenticated=False)
 
-# --- 새로운 API 엔드포인트: 세네카 계산을 위한 비동기 요청 처리 ---
+# 새로운 API 엔드포인트: 세네카 계산을 위한 비동기 요청 처리
 @app.route('/calculate_seneca_api', methods=['POST'])
 def calculate_seneca_api():
     if not session.get('authenticated'):
