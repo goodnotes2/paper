@@ -107,7 +107,7 @@
             min-height: 1.5rem;
         }
         .calculator-section {
-            max-height: 200px;
+            max-height: 250px;
             overflow-y: auto;
         }
     </style>
@@ -159,7 +159,14 @@
                 </div>
                 
                 <div class="bg-gray-50 p-6 rounded-lg shadow-inner w-full sm:w-2/3 calculator-section">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">세네카 계산기</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                        세네카 계산기
+                        <span class="text-blue-600 ml-2" id="seneca_calculated_result_display">
+                            {% if seneca_result is not none %}
+                                {{ seneca_result }} 세네카
+                            {% endif %}
+                        </span>
+                    </h2>
                     <form method="POST" action="{{ url_for('index') }}" class="flex flex-col sm:flex-row gap-4 mb-4 items-end justify-center">
                         <div class="flex-1 max-w-xs">
                             <label for="seneca_page_count" class="block text-sm font-medium text-gray-700 mb-1">페이지</label>
@@ -181,7 +188,7 @@
                             계산을 위해 아래 표에서 품목을 선택해주세요.
                         {% endif %}
                     </p>
-                    <p class="text-xl font-semibold text-gray-800 mt-4">
+                    <p class="text-xl font-semibold text-gray-800 mt-4" style="display: none;">
                         계산 결과: <span class="text-blue-600" id="seneca_calculated_result_display">
                             {% if seneca_result is not none %}
                                 {{ seneca_result }} 세네카
