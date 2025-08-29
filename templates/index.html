@@ -281,7 +281,9 @@
                                 <td class="table-row-cell">{{ item.색상_및_패턴 }}</td>
                                 <td class="table-row-cell">{{ item.두께 }}</td>
                                 <td class="table-row-cell price-cell" data-original-price="{{ item.고시가_원본 }}" data-is-divided="false" onclick="togglePrice(this)">{{ item.고시가 }}</td>
-                                <td class="table-row-cell">{{ item.시트명 }}</td>
+                                <td class="table-row-cell">
+                                    <a href="{{ item.url }}" target="_blank" class="text-blue-600 hover:underline">{{ item.시트명 }}</a>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>

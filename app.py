@@ -28,6 +28,19 @@ sheets = ['두성', '삼원', '한국', '무림', '삼화', '서경', '한솔', 
 # --- Access Password ---
 ACCESS_PASSWORD = os.environ.get('APP_ACCESS_PASSWORD', 'your_secret_password_default')
 
+# 각 제지사별 홈페이지 URL을 저장하는 딕셔너리
+company_urls = {
+    '두성': 'https://www.doosungpaper.co.kr/',
+    '삼원': 'https://www.samwonpaper.com/product/paper/list',
+    '한국': 'https://www.hankukpaper.com/ko/product/listProductinfo.do',
+    '무림': 'https://www.moorim.co.kr:13002/product/paper.php',
+    '삼화': 'https://www.samwhapaper.com/',
+    '서경': 'https://wedesignpaper.com/#',
+    '한솔': 'https://www.hansolpaper.co.kr/product/insper',
+    '전주': 'https://jeonjupaper.com/publicationpaper'
+}
+
+
 # --- Data Loading Function ---
 def load_data():
     data = []
@@ -191,7 +204,6 @@ def index():
                     original_고시가 = None
                     if '고시가' in row and pd.notna(row['고시가']):
                         try:
-                            # 고시가 원본을 저장
                             original_고시가 = str(row['고시가']).replace(',', '').strip()
                             formatted_고시가 = f"{int(float(original_고시가)):,}" if original_고시가 else 'N/A'
                             
@@ -208,7 +220,8 @@ def index():
                         '고시가': formatted_고시가,
                         '고시가_원본': original_고시가,
                         '두께': thickness_value,
-                        '시트명': row.get('시트명', 'N/A')
+                        '시트명': row.get('시트명', 'N/A'),
+                        'url': company_urls.get(row.get('시트명'), '#')
                     })
             
         logo_path = image_file_name
