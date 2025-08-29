@@ -367,8 +367,12 @@
                     cell.textContent = parseInt(originalPrice).toLocaleString('ko-KR'); // 원래 값으로 되돌리기
                     cell.dataset.isDivided = 'false';
                 } else {
-                    const dividedPrice = (parseFloat(originalPrice) / 500).toFixed(2);
-                    cell.textContent = dividedPrice;
+                    const dividedPrice = parseFloat(originalPrice) / 500;
+                    if (dividedPrice % 1 === 0) {
+                        cell.textContent = dividedPrice.toLocaleString('ko-KR');
+                    } else {
+                        cell.textContent = dividedPrice.toFixed(2);
+                    }
                     cell.dataset.isDivided = 'true';
                 }
             }
@@ -379,7 +383,7 @@
             const headers = document.querySelectorAll('th[data-sort-key]');
             headers.forEach(header => {
                 header.addEventListener('click', function() {
-                    const sortKey = this.dataset.sortKey;
+                    const sortKey = this.dataset.sort-key;
                     let sortOrder = 'asc';
 
                     const urlParams = new URLSearchParams(window.location.search);
