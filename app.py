@@ -26,7 +26,7 @@ image_file_name = 'search.png'
 sheets = ['두성', '삼원', '한국', '무림', '삼화', '서경', '한솔', '전주']
 
 # --- Access Password ---
-ACCESS_PASSWORD = '03877'
+ACCESS_PASSWORD = os.environ.get('APP_ACCESS_PASSWORD', 'your_secret_password_default')
 
 # --- Data Loading Function ---
 def load_data():
@@ -188,10 +188,14 @@ def index():
             if not result_df.empty:
                 for _, row in result_df.iterrows():
                     formatted_고시가 = 'N/A'
+                    original_고시가 = None
                     if '고시가' in row and pd.notna(row['고시가']):
                         try:
-                            formatted_고시가 = f"{int(row['고시가']):,}"
-                        except ValueError:
+                            # 고시가 원본을 저장
+                            original_고시가 = str(row['고시가']).replace(',', '').strip()
+                            formatted_고시가 = f"{int(float(original_고시가)):,}" if original_고시가 else 'N/A'
+                            
+                        except (ValueError, TypeError):
                             formatted_고시가 = str(row['고시가'])
                     
                     thickness_value = row.get('두께', 'N/A')
@@ -202,6 +206,7 @@ def index():
                         '평량': row.get('평량', 'N/A'),
                         '색상_및_패턴': row.get('색상 및 패턴', 'N/A'),
                         '고시가': formatted_고시가,
+                        '고시가_원본': original_고시가,
                         '두께': thickness_value,
                         '시트명': row.get('시트명', 'N/A')
                     })
