@@ -30,12 +30,12 @@ ACCESS_PASSWORD = os.environ.get('APP_ACCESS_PASSWORD', 'your_secret_password_de
 
 # 각 제지사별 홈페이지 URL을 저장하는 딕셔너리
 company_urls = {
-    '두성': 'https://www.doosungpaper.co.kr/',
-    '삼원': 'https://www.samwonpaper.com/product/paper/list',
+    '두성': 'https://www.doosungpaper.co.kr/goods/goods_search.php?keyword=',
+    '삼원': 'https://www.samwonpaper.com/product/paper/list?search.searchString=',
     '한국': 'https://www.hankukpaper.com/ko/product/listProductinfo.do',
     '무림': 'https://www.moorim.co.kr:13002/product/paper.php',
-    '삼화': 'https://www.samwhapaper.com/',
-    '서경': 'https://wedesignpaper.com/#',
+    '삼화': 'https://www.samwhapaper.com/product/samwhapaper/all?keyword=',
+    '서경': 'https://wedesignpaper.com/search?type=shopping&sort=consensus_desc&keyword=',
     '한솔': 'https://www.hansolpaper.co.kr/product/insper',
     '전주': 'https://jeonjupaper.com/publicationpaper'
 }
@@ -212,6 +212,20 @@ def index():
                     
                     thickness_value = row.get('두께', 'N/A')
 
+                    # 시트명에 따라 동적으로 URL을 생성합니다.
+                    sheet_name = row.get('시트명')
+                    url_to_use = company_urls.get(sheet_name, '#')
+                    if sheet_name in ['두성', '삼원', '서경', '삼화'] and search_keyword:
+                        if sheet_name == '삼화':
+                            url_to_use = f"{company_urls.get(sheet_name)}{search_keyword}"
+                        else:
+                            url_to_use = f"{company_urls.get(sheet_name)}{search_keyword}"
+                    
+                    # '한국', '무림', '한솔', '전주'의 경우 URL을 그대로 유지합니다.
+                    if sheet_name in ['한국', '무림', '한솔', '전주']:
+                        url_to_use = company_urls.get(sheet_name)
+
+
                     search_results.append({
                         '품목': row.get('품목', 'N/A'),
                         '사이즈': row.get('사이즈', 'N/A'),
@@ -220,8 +234,8 @@ def index():
                         '고시가': formatted_고시가,
                         '고시가_원본': original_고시가,
                         '두께': thickness_value,
-                        '시트명': row.get('시트명', 'N/A'),
-                        'url': company_urls.get(row.get('시트명'), '#')
+                        '시트명': sheet_name,
+                        'url': url_to_use
                     })
             
         logo_path = image_file_name
