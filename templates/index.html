@@ -106,7 +106,16 @@
             margin-top: 0.5rem;
             min-height: 1.5rem;
         }
-    </style>
+    </style> 
+ /* 상단 제목 '품목 검색' 고정 */
+        .title-sticky {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: #ffffff;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
 </head>
 <body>
     {% if not authenticated %}
@@ -135,7 +144,7 @@
         </div>
     {% else %}
         <div class="container">
-            <div class="flex justify-between items-center mb-8">
+            <div class="title-sticky flex justify-between items-center mb-8">
                 <h1 class="text-4xl font-extrabold text-gray-900">품목 검색</h1>
             </div>
 
