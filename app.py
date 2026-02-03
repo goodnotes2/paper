@@ -1,4 +1,5 @@
-import pandas as pd  # 'import pd as pd'에서 수정됨
+# app.py
+import pandas as pd
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import sys
@@ -18,8 +19,8 @@ except:
 excel_file_name = 'search.xlsx'
 image_file_name = 'search.png'
 sheets = ['두성', '삼원', '한국', '무림', '삼화', '서경', '한솔', '전주']
-# 요청하신 비밀번호로 수정
-ACCESS_PASSWORD = os.environ.get('APP_ACCESS_PASSWORD', '03877') 
+# 요청하신 비밀번호 반영
+ACCESS_PASSWORD = os.environ.get('APP_ACCESS_PASSWORD', '03877')
 
 company_urls = {
     '두성': 'https://www.doosungpaper.co.kr/goods/goods_search.php?keyword=',
@@ -62,8 +63,9 @@ def load_data():
             df['시트명'] = sheet
             df['url'] = company_urls.get(sheet, '#') + df['품목'].astype(str)
             all_data.append(df)
+            print(f"[SUCCESS] '{sheet}' 시트 로드 완료", file=sys.stderr)
         except Exception as e:
-            print(f"[ERROR] {sheet} 로드 실패: {e}", file=sys.stderr)
+            print(f"[ERROR] '{sheet}' 시트 로드 실패: {e}", file=sys.stderr)
 
     if all_data:
         return pd.concat(all_data, ignore_index=True).fillna('')
@@ -71,16 +73,22 @@ def load_data():
 
 df_all = load_data()
 
-# 4. 세네카 계산 API
+# 4. 세네카 계산 API (마이크로미터 변환 로직 포함)
 @app.route('/calculate_seneca_api', methods=['POST'])
 def calculate_seneca_api():
     data = request.get_json()
     try:
         page = float(data.get('page_count', 0))
-        thickness = float(data.get('thickness', 0))
-        result = (page / 2) * thickness
-        return jsonify({'result': round(result, 2)})
-    except:
+        # 엑셀의 마이크로미터(um) 단위를 밀리미터(mm)로 변환하기 위해 1000으로 나눔
+        thickness_um = float(data.get('thickness', 0))
+        thickness_mm = thickness_um / 1000 
+        
+        # 세네카 공식: (페이지 / 2) * 두께(mm)
+        result_mm = (page / 2) * thickness_mm
+        
+        return jsonify({'result': round(result_mm, 2)})
+    except Exception as e:
+        print(f"[ERROR] 계산 중 오류 발생: {e}", file=sys.stderr)
         return jsonify({'error': '계산 불가'}), 400
 
 # 5. 메인 페이지 라우트
@@ -98,9 +106,10 @@ def index():
     results = []
 
     if authenticated and not df_all.empty and keyword:
+        # 검색 필터링 (품목명 또는 시트명 포함 여부)
         mask = (
-            df_all['품목'].str.contains(keyword, case=False, na=False) |
-            df_all['시트명'].str.contains(keyword, case=False, na=False)
+            df_all['품목'].astype(str).str.contains(keyword, case=False, na=False) |
+            df_all['시트명'].astype(str).str.contains(keyword, case=False, na=False)
         )
         results = df_all[mask].to_dict('records')
 
