@@ -72,7 +72,7 @@ def load_data():
                     df['품목'] = "알 수 없음"
             
             if '품목' in df.columns:
-                df['품목'] = df['품목'].fillna(method='ffill')
+                df['품목'] = df['품목'].ffill()
             
             if '사이즈' in df.columns:
                 df['사이즈'] = df['사이즈'].fillna(method='ffill')
@@ -273,3 +273,4 @@ def calculate_seneca_api():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
