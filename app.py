@@ -15,14 +15,15 @@ except Exception as e:
     print(f"[ERROR] Failed to decode FLASK_SECRET_KEY from Base64: {e}", file=sys.stderr)
     app.config['SECRET_KEY'] = b'fallback_secret_key_if_decoding_fails'
 
-# --- Configuration ---
+# --- 설정 (Configuration) ---
 excel_file_name = 'search.xlsx'
 image_file_name = 'search.png'
 sheets = ['두성', '삼원', '한국', '무림', '삼화', '서경', '한솔', '전주']
 
-# --- Access Password ---
+# --- 접속 암호 (Environment Variable에서 가져옴) ---
 ACCESS_PASSWORD = os.environ.get('APP_ACCESS_PASSWORD', 'your_secret_password_default')
 
+# 제지사별 홈페이지 URL
 company_urls = {
     '두성': 'https://www.doosungpaper.co.kr/goods/goods_search.php?keyword=',
     '삼원': 'https://www.samwonpaper.com/product/paper/list?search.searchString=',
@@ -34,146 +35,136 @@ company_urls = {
     '전주': 'https://jeonjupaper.com/publicationpaper'
 }
 
-# --- Data Loading Function ---
+# --- 데이터 로드 함수 (빈 칸 자동 채우기 포함) ---
 def load_data():
     data = []
     excel_file_path = os.path.join(app.root_path, excel_file_name)
 
-    print(f"[DEBUG] Attempting to load Excel file from: {excel_file_path}", file=sys.stderr)
-
     if not os.path.exists(excel_file_path):
-        print(f"[ERROR] Excel file '{excel_file_path}' not found.", file=sys.stderr)
+        print(f"[ERROR] '{excel_file_path}' 파일을 찾을 수 없습니다.", file=sys.stderr)
         return pd.DataFrame()
 
     for sheet in sheets:
         try:
             df = pd.read_excel(excel_file_path, sheet_name=sheet, engine='openpyxl')
+            
+            # 컬럼명 공백 제거
             df.columns = df.columns.str.strip().str.replace(r'\s+', ' ', regex=True)
             
+            # '품목' 컬럼 찾기 및 이름 통일
             if '품목' not in df.columns:
-                found_spaced_품목 = False
                 for col in df.columns:
                     if '품 목' in col.replace(' ', ''):
                         df.rename(columns={col: '품목'}, inplace=True)
-                        found_spaced_품목 = True
                         break
-                
-                if not found_spaced_품목 and '품' in df.columns and '목' in df.columns:
-                    df['품목'] = (df['품'].fillna('') + df['목'].fillna('')).replace('', '알 수 없음')
-                elif not found_spaced_품목:
-                    df['품목'] = "알 수 없음"
             
-            # --- Pandas 최신 버전 호환성 수정 (중요!) ---
+            # --- 중요: 빈 칸(NaN) 위에서 아래로 자동 채우기 (.ffill) ---
+            # 엑셀에서 첫 줄에만 값을 적고 아래는 비워둔 경우를 처리합니다.
             if '품목' in df.columns:
-                df['품목'] = df['품목'].ffill() # 수정 완료
+                df['품목'] = df['품목'].ffill()
             
             if '사이즈' in df.columns:
-                df['사이즈'] = df['사이즈'].ffill() # 수정 완료
+                df['사이즈'] = df['사이즈'].ffill()
             
             if '평량' in df.columns:
-                df['평량'] = df['평량'].ffill() # 수정 완료
+                df['평량'] = df['평량'].ffill()
 
             if '색상 및 패턴' in df.columns:
-                df['색상 및 패턴'] = df['색상 및 패턴'].ffill() # 수정 완료
-            # ------------------------------------------
+                df['색상 및 패턴'] = df['색상 및 패턴'].ffill()
+            # ------------------------------------------------------
 
             df['시트명'] = sheet
             data.append(df)
-            print(f"[DEBUG] Sheet '{sheet}' loaded successfully.", file=sys.stderr)
+            print(f"[DEBUG] '{sheet}' 시트 로드 성공.", file=sys.stderr)
         except Exception as e:
-            print(f"[ERROR] Error loading sheet '{sheet}': {e}", file=sys.stderr)
+            print(f"[ERROR] '{sheet}' 시트 로드 중 오류: {e}", file=sys.stderr)
     
     if data:
-        df_combined = pd.concat(data, ignore_index=True)
-        return df_combined
-    else:
-        return pd.DataFrame()
+        return pd.concat(data, ignore_index=True)
+    return pd.DataFrame()
 
+# 서버 시작 시 데이터 로드
 df_all = load_data()
 
-# --- Seneca Calculation Function ---
+# --- 세네카 계산 로직 ---
 def calculate_seneca(page_count, thickness):
     try:
         pc = float(page_count)
         t = float(thickness)
-        if t == 0: return "두께는 0이 될 수 없습니다."
-        seneca_result = (pc / 2) * t / 1000
-        return f"{seneca_result:,.1f}"
+        if t <= 0: return "두께 오류"
+        result = (pc / 2) * t / 1000
+        return f"{result:,.1f}"
     except:
-        return "유효한 값을 입력해주세요."
+        return "숫자 입력 필요"
 
-# --- Web Routes ---
+# --- 메인 페이지 루틴 ---
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    # 데이터 로드 확인 (앱 시작시 실패했을 경우 대비)
     global df_all
-    if df_all.empty:
+    if df_all.empty: # 데이터가 없으면 다시 로드 시도
         df_all = load_data()
 
     authenticated = session.get('authenticated', False)
-    seneca_result, seneca_page_count, seneca_selected_thickness, seneca_selected_product_info = None, "", "", ""
-    search_results, message = [], ""
+    search_keyword = (request.form.get('keyword', '') if request.method == 'POST' else request.args.get('keyword', '')).strip()
     
-    search_keyword = request.form.get('keyword', '').strip() if request.method == 'POST' else request.args.get('keyword', '').strip()
-    sort_by = request.args.get('sort_by')
-    sort_order = request.args.get('sort_order', 'asc')
+    seneca_result = None
+    search_results = []
+    message = ""
 
-    if request.method == 'POST':
-        if 'password' in request.form:
-            if request.form.get('password') == ACCESS_PASSWORD:
-                session['authenticated'] = True
-                return redirect(url_for('index'))
-            else:
-                flash('비밀번호가 틀렸습니다.', 'danger')
-                return render_template('index.html', authenticated=False)
-        
-        if not authenticated:
+    # 1. 로그인 처리
+    if request.method == 'POST' and 'password' in request.form:
+        if request.form.get('password') == ACCESS_PASSWORD:
+            session['authenticated'] = True
+            return redirect(url_for('index'))
+        else:
+            flash('비밀번호가 틀렸습니다.', 'danger')
             return render_template('index.html', authenticated=False)
 
-        if 'calculate_seneca_btn' in request.form:
-            seneca_page_count = request.form.get('seneca_page_count', '').strip()
-            seneca_selected_thickness = request.form.get('seneca_selected_thickness_hidden', '').strip()
-            seneca_selected_product_info = request.form.get('seneca_selected_product_info_hidden', '').strip()
-            if seneca_page_count and seneca_selected_thickness and seneca_selected_thickness != 'N/A':
-                seneca_result = calculate_seneca(seneca_page_count, seneca_selected_thickness)
-    
+    # 2. 로그인된 상태에서의 검색 및 계산
     if authenticated:
+        # 세네카 계산 요청인 경우
+        if request.method == 'POST' and 'calculate_seneca_btn' in request.form:
+            pc = request.form.get('seneca_page_count', '').strip()
+            tk = request.form.get('seneca_selected_thickness_hidden', '').strip()
+            if pc and tk and tk != 'nan' and tk != 'N/A':
+                seneca_result = calculate_seneca(pc, tk)
+
+        # 검색 처리
         if df_all.empty:
-            message = "데이터를 불러오는 데 실패했습니다. 파일명을 확인하세요."
-            result_df = pd.DataFrame()
+            message = "파일에 데이터가 없거나 불러올 수 없습니다."
         else:
             if not search_keyword:
-                result_df = df_all.copy()
+                res_df = df_all.head(100).copy() # 너무 많으면 처음 100개만
+            elif search_keyword in sheets:
+                res_df = df_all[df_all['시트명'] == search_keyword].copy()
             else:
-                if search_keyword in sheets:
-                    result_df = df_all[df_all['시트명'] == search_keyword].copy()
-                else:
-                    result_df = df_all[df_all['품목'].astype(str).str.contains(search_keyword, case=False, na=False)].copy()
+                res_df = df_all[df_all['품목'].astype(str).str.contains(search_keyword, case=False, na=False)].copy()
 
-            if result_df.empty:
+            if res_df.empty:
                 message = f"'{search_keyword}'에 대한 결과가 없습니다."
             else:
-                # 결과 포맷팅
-                for _, row in result_df.iterrows():
+                for _, row in res_df.iterrows():
                     sheet_name = row.get('시트명')
-                    url_to_use = company_urls.get(sheet_name, '#')
-                    if sheet_name in ['두성', '삼원', '서경', '삼화'] and search_keyword:
-                        url_to_use = f"{company_urls[sheet_name]}{search_keyword}"
+                    base_url = company_urls.get(sheet_name, '#')
+                    # 검색 연동 URL 생성
+                    final_url = f"{base_url}{search_keyword}" if sheet_name in ['두성', '삼원', '서경', '삼화'] else base_url
 
                     search_results.append({
                         '품목': row.get('품목', 'N/A'),
                         '사이즈': row.get('사이즈', 'N/A'),
                         '평량': row.get('평량', 'N/A'),
                         '색상_및_패턴': row.get('색상 및 패턴', 'N/A'),
-                        '고시가': row.get('고시가', 'N/A'),
+                        '고시가': f"{int(float(row['고시가'])):,}" if pd.notna(row.get('고시가')) and str(row.get('고시가')).replace('.','').isdigit() else row.get('고시가', 'N/A'),
                         '두께': row.get('두께', 'N/A'),
                         '시트명': sheet_name,
-                        'url': url_to_use
+                        'url': final_url
                     })
-            
-        return render_template('index.html', authenticated=authenticated, results=search_results, keyword=search_keyword, message=message, logo_path=image_file_name, seneca_result=seneca_result)
+
+        return render_template('index.html', authenticated=True, results=search_results, keyword=search_keyword, message=message, seneca_result=seneca_result)
+
     return render_template('index.html', authenticated=False)
 
+# API: 비동기 계산용
 @app.route('/calculate_seneca_api', methods=['POST'])
 def calculate_seneca_api():
     if not session.get('authenticated'): return jsonify({'error': 'Unauthorized'}), 401
