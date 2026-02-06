@@ -1,12 +1,4 @@
-<<<<<<< HEAD
-flask
-pandas
-openpyxl
-gunicorn
-=======
 Flask
+gunicorn
 pandas
 openpyxl
-Pillow
-gunicorn
->>>>>>> c2941df (make it better)
