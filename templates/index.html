@@ -7,17 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: sans-serif; background-color: #f3f4f6; margin: 0; }
-        .container { width: 95%; max-width: 1200px; margin: 1rem auto; padding: 1.5rem; background: white; border-radius: 0.75rem; shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        
-        /* 📌 테이블 헤더 고정 */
+        .container { width: 95%; max-width: 1200px; margin: 1rem auto; padding: 1.5rem; background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .sticky-header { position: sticky; top: 0; z-index: 50; background-color: #f9fafb !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         th { padding: 0.75rem 1rem; text-align: left; font-size: 0.875rem; border-bottom: 2px solid #e5e7eb; }
         td { padding: 0.75rem 1rem; border-bottom: 1px solid #f3f4f6; font-size: 0.875rem; }
-        
-        /* 📌 슬림 계산기 디자인 */
         .calc-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; width: 100%; max-width: 500px; }
-        .calc-input { border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0.4rem 0.75rem; width: 120px; outline: none; }
-        .calc-input:focus { border-color: #3b82f6; ring: 2px #bfdbfe; }
+        .calc-input { border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0.4rem 0.75rem; width: 100px; outline: none; }
     </style>
 </head>
 <body>
@@ -27,7 +22,6 @@
                 <img src="/static/search.png" alt="Logo" class="w-16 h-16 rounded shadow-sm" onerror="this.src='https://via.placeholder.com/64'">
                 <h1 class="text-2xl font-bold text-gray-800">품목 검색</h1>
             </div>
-            
             <div class="calc-box shadow-sm">
                 <div class="flex items-center justify-between gap-4">
                     <div>
@@ -51,14 +45,24 @@
             <table class="min-w-full bg-white border-collapse">
                 <thead class="sticky-header">
                     <tr class="text-gray-600">
-                        <th>품목</th><th>사이즈</th><th>평량</th><th>색상 및 패턴</th><th>두께</th><th>고시가</th><th>시트명</th>
+                        <th>품목</th><th>사이즈</th><th>평량</th><th>색상 및 패턴</th><th>두께</th><th>고시가</th><th>시트명(링크)</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in results %}
                     <tr class="hover:bg-blue-50 cursor-pointer" onclick="selectRow(this, '{{ item.두께 }}', '{{ item.품목 }}')">
                         <td>{{ item.품목 }}</td><td>{{ item.사이즈 }}</td><td>{{ item.평량 }}</td><td>{{ item.색상_및_패턴 }}</td><td>{{ item.두께 }}</td><td>{{ item.고시가 }}</td>
-                        <td><a href="{{ item.url }}" target="_blank" class="text-blue-500 hover:underline">두성</a></td>
+                        <td>
+                            {% if item.시트명 == '두성' %}
+                                <a href="https://www.doosungpaper.co.kr/Search?SearchText={{ item.품목 }}" target="_blank" class="text-blue-500 hover:underline" onclick="event.stopPropagation();">{{ item.시트명 }}</a>
+                            {% elif item.시트명 == '삼원' %}
+                                <a href="http://www.samwonpaper.com/product/search?kwd={{ item.품목 }}" target="_blank" class="text-blue-500 hover:underline" onclick="event.stopPropagation();">{{ item.시트명 }}</a>
+                            {% elif item.시트명 == '무림' %}
+                                <a href="https://www.moorim.co.kr/ko/product/search.do?searchKeyword={{ item.품목 }}" target="_blank" class="text-blue-500 hover:underline" onclick="event.stopPropagation();">{{ item.시트명 }}</a>
+                            {% else %}
+                                <a href="https://www.google.com/search?q={{ item.시트명 }}+{{ item.품목 }}" target="_blank" class="text-blue-500 hover:underline" onclick="event.stopPropagation();">{{ item.시트명 }}</a>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

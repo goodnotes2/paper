@@ -11,22 +11,22 @@ def load_data():
         return pd.DataFrame()
     
     try:
-        # 📌 1. 엑셀의 모든 시트(두성, 삼원, 무림 등)를 한 번에 읽기
+        # 엑셀의 모든 시트(두성, 삼원, 무림 등)를 한 번에 읽기
         all_sheets = pd.read_excel(file_path, sheet_name=None, engine='openpyxl')
         
         combined_df = []
         for sheet_name, df in all_sheets.items():
-            # 컬럼명 정리
+            # 컬럼명 공백 제거
             df.columns = [str(col).strip() for col in df.columns]
             
-            # 📌 2. 핵심 해결책: 비어있는 품목/사이즈/평량을 바로 위의 값으로 채우기 (ffill)
-            # 이 작업을 해야 '아트지' 아래 빈칸들도 전부 '아트지'로 인식됩니다.
+            # 병합된 셀(빈칸)을 위 데이터로 자동 채우기 (ffill)
+            # 품목명이 한 줄에만 있어도 아래 줄까지 다 검색되게 합니다.
             fill_cols = ['품목', '사이즈', '평량']
             for col in fill_cols:
                 if col in df.columns:
                     df[col] = df[col].ffill()
             
-            # 어느 시트인지 표시
+            # 시트명(제지사 이름) 저장
             df['시트명'] = sheet_name
             combined_df.append(df)
             
@@ -44,7 +44,7 @@ def index():
         if keyword:
             df = load_data()
             if not df.empty:
-                # 📌 3. 검색 강화: '아트'가 포함된 모든 행을 대소문자 무시하고 검색
+                # 대소문자 무시하고 모든 칸에서 키워드 포함 여부 검색
                 mask = df.apply(lambda row: row.astype(str).str.contains(keyword, case=False).any(), axis=1)
                 results = df[mask].to_dict('records')
     
