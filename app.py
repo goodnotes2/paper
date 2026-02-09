@@ -1,5 +1,5 @@
 import pandas as pd
-from flask import Flask, render_template, request, flash
+from flask import Flask, render_template, request
 import os
 
 app = Flask(__name__)
@@ -11,48 +11,43 @@ def load_data():
         return pd.DataFrame()
     
     try:
-        # 📌 모든 시트를 읽어오기 (두성, 삼원, 한국 등 전체 검색 가능)
+        # 📌 1. 엑셀의 모든 시트(두성, 삼원, 무림 등)를 한 번에 읽기
         all_sheets = pd.read_excel(file_path, sheet_name=None, engine='openpyxl')
         
         combined_df = []
         for sheet_name, df in all_sheets.items():
-            # 컬럼명 공백 제거
+            # 컬럼명 정리
             df.columns = [str(col).strip() for col in df.columns]
             
-            # 📌 병합된 셀(빈칸)을 위쪽 데이터로 채우기 (이미지의 E-보드 문제 해결)
-            cols_to_fill = ['품목', '사이즈', '평량']
-            for col in cols_to_fill:
+            # 📌 2. 핵심 해결책: 비어있는 품목/사이즈/평량을 바로 위의 값으로 채우기 (ffill)
+            # 이 작업을 해야 '아트지' 아래 빈칸들도 전부 '아트지'로 인식됩니다.
+            fill_cols = ['품목', '사이즈', '평량']
+            for col in fill_cols:
                 if col in df.columns:
                     df[col] = df[col].ffill()
             
-            # 어느 시트 데이터인지 표시 (선택 사항)
+            # 어느 시트인지 표시
             df['시트명'] = sheet_name
             combined_df.append(df)
             
-        final_df = pd.concat(combined_df, ignore_index=True)
-        return final_df.fillna('')
+        return pd.concat(combined_df, ignore_index=True).fillna('')
     except Exception as e:
-        print(f"Excel Load Error: {e}")
+        print(f"Error: {e}")
         return pd.DataFrame()
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     keyword = ""
     results = []
-    
     if request.method == 'POST':
         keyword = request.form.get('keyword', '').strip()
-        
         if keyword:
             df = load_data()
             if not df.empty:
-                # 📌 대소문자 구분 없이 모든 열에서 키워드 검색
+                # 📌 3. 검색 강화: '아트'가 포함된 모든 행을 대소문자 무시하고 검색
                 mask = df.apply(lambda row: row.astype(str).str.contains(keyword, case=False).any(), axis=1)
                 results = df[mask].to_dict('records')
-            
-            if not results:
-                flash(f"'{keyword}'에 대한 결과가 없습니다.", 'info')
-
+    
     return render_template('index.html', results=results, keyword=keyword)
 
 if __name__ == '__main__':
