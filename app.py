@@ -1,9 +1,9 @@
 import pandas as pd
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, flash
 import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+app.secret_key = 'paper_search_key'
 
 def load_data():
     file_path = 'search.xlsx'
@@ -11,61 +11,49 @@ def load_data():
         return pd.DataFrame()
     
     try:
-        # 엔진을 openpyxl로 명시하여 엑셀 로드 안정성 강화
-        df = pd.read_excel(file_path, engine='openpyxl')
+        # 📌 모든 시트를 읽어오기 (두성, 삼원, 한국 등 전체 검색 가능)
+        all_sheets = pd.read_excel(file_path, sheet_name=None, engine='openpyxl')
         
-        # 모든 컬럼명의 앞뒤 공백 제거 (매우 중요!)
-        df.columns = [str(col).strip() for col in df.columns]
-        
-        if '평량' in df.columns:
-            df['평량'] = df['평량'].ffill()
+        combined_df = []
+        for sheet_name, df in all_sheets.items():
+            # 컬럼명 공백 제거
+            df.columns = [str(col).strip() for col in df.columns]
             
-        df = df.fillna('')
-        return df
+            # 📌 병합된 셀(빈칸)을 위쪽 데이터로 채우기 (이미지의 E-보드 문제 해결)
+            cols_to_fill = ['품목', '사이즈', '평량']
+            for col in cols_to_fill:
+                if col in df.columns:
+                    df[col] = df[col].ffill()
+            
+            # 어느 시트 데이터인지 표시 (선택 사항)
+            df['시트명'] = sheet_name
+            combined_df.append(df)
+            
+        final_df = pd.concat(combined_df, ignore_index=True)
+        return final_df.fillna('')
     except Exception as e:
         print(f"Excel Load Error: {e}")
         return pd.DataFrame()
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    authenticated = True 
     keyword = ""
     results = []
-
+    
     if request.method == 'POST':
         keyword = request.form.get('keyword', '').strip()
         
         if keyword:
             df = load_data()
             if not df.empty:
-                # 유연한 컬럼 매칭: '품목'이나 '시트'라는 글자가 들어간 모든 컬럼 찾기
-                target_cols = [col for col in df.columns if '품목' in col or '시트' in col]
-                
-                # 만약 지정된 컬럼이 없으면 전체 컬럼에서 검색 시도
-                if not target_cols:
-                    target_cols = df.columns.tolist()
-
-                def search_row(row):
-                    for col in target_cols:
-                        if keyword.lower() in str(row[col]).lower():
-                            return True
-                    return False
-
-                mask = df.apply(search_row, axis=1)
-                search_df = df[mask].copy()
-                
-                if not search_df.empty:
-                    if '고시가' in search_df.columns:
-                        search_df['고시가_원본'] = search_df['고시가']
-                    results = search_df.to_dict('records')
+                # 📌 대소문자 구분 없이 모든 열에서 키워드 검색
+                mask = df.apply(lambda row: row.astype(str).str.contains(keyword, case=False).any(), axis=1)
+                results = df[mask].to_dict('records')
             
             if not results:
-                flash(f"'{keyword}'에 대한 검색 결과가 없습니다. (확인된 컬럼: {df.columns.tolist()})", 'info')
+                flash(f"'{keyword}'에 대한 결과가 없습니다.", 'info')
 
-    return render_template('index.html', 
-                           results=results, 
-                           keyword=keyword, 
-                           authenticated=authenticated)
+    return render_template('index.html', results=results, keyword=keyword)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
