@@ -34,7 +34,7 @@
                 <img src="{{ url_for('static', filename=logo_path) }}" class="w-14 h-14 rounded-xl object-contain" onerror="this.src='https://via.placeholder.com/64'">
                 <div>
                     <h1 class="text-2xl font-black tracking-tight">종이 품목 검색</h1>
-                    <p class="text-xs text-gray-400 font-medium uppercase">Paper Search v2.1</p>
+                    <p class="text-xs text-gray-400 font-medium uppercase">Paper Search v2.2</p>
                 </div>
             </div>
             
@@ -52,10 +52,12 @@
         </header>
 
         <form method="POST" action="/" class="relative">
-            <input type="text" name="keyword" placeholder="검색어를 입력하세요..." value="{{ keyword }}" class="w-full px-6 py-5 rounded-2xl search-input text-lg shadow-sm">
+            <input type="text" name="keyword" placeholder="검색어를 입력하고 엔터를 누르세요..." value="{{ keyword }}" 
+                   class="w-full px-6 py-5 rounded-2xl search-input text-lg shadow-sm" autofocus>
             <button type="submit" class="absolute right-3 top-2.5 px-8 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">검색</button>
         </form>
 
+        {% if results %}
         <div class="glass-card rounded-2xl overflow-hidden shadow-sm border border-gray-200">
             <div class="overflow-x-auto max-h-[600px]">
                 <table class="w-full text-left border-collapse">
@@ -74,18 +76,16 @@
                         {% for item in results %}
                         <tr class="hover:bg-blue-50/50 cursor-pointer transition-colors" 
                             onclick="selectRow(this, '{{ item.두께 }}', '{{ item.품목 }}', '{{ item.사이즈 }}', '{{ item.평량 }}')">
-                            <td class="px-6 py-4 font-bold text-gray-900">{{ item.품목 | default('-', true) }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ item.사이즈 | default('-', true) }}</td>
-                            <td class="px-6 py-4 text-center font-semibold text-gray-700">{{ item.평량 | default('-', true) }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-400">{{ item.색상_및_패턴 | default('-', true) }}</td>
+                            <td class="px-6 py-4 font-bold text-gray-900">{{ item.품목 }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ item.사이즈 }}</td>
+                            <td class="px-6 py-4 text-center font-semibold text-gray-700">{{ item.평량 }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-400">{{ item.색상_및_패턴 }}</td>
                             <td class="px-6 py-4 text-center">
-                                <span class="px-2 py-1 bg-gray-100 rounded text-xs font-bold text-gray-600">{{ item.두께 | default('0', true) }}</span>
+                                <span class="px-2 py-1 bg-gray-100 rounded text-xs font-bold text-gray-600">{{ item.두께 }}</span>
                             </td>
                             <td class="px-6 py-4 font-mono price-cell" 
                                 data-val="{{ item.고시가_원본 }}" data-mode="R" onclick="event.stopPropagation(); togglePrice(this)">
-                                <script>
-                                    document.write(Number("{{ item.고시가_원본 }}").toLocaleString());
-                                </script>
+                                {{ item.고시가 }}
                             </td>
                             <td class="px-6 py-4">
                                 <a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation();"
@@ -99,6 +99,11 @@
                 </table>
             </div>
         </div>
+        {% elif keyword %}
+        <div class="p-20 text-center glass-card rounded-3xl border border-dashed border-gray-200 text-gray-400">
+            "{{ keyword }}"에 대한 검색 결과가 없습니다.
+        </div>
+        {% endif %}
         
         <div class="text-center pt-4">
             <a href="/logout" class="text-[10px] text-gray-300 hover:text-red-400 font-bold tracking-widest uppercase">Logout System</a>
@@ -128,7 +133,6 @@
             
             if(el.dataset.mode === "R") {
                 const single = (raw / 500);
-                // 낱장가도 소수점 2자리와 콤마 적용
                 el.innerText = single.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}) + " (낱장)";
                 el.dataset.mode = "S";
                 el.classList.add('text-blue-600');

@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, session, redirect, url_for, f
 import os
 
 app = Flask(__name__)
-# 세션 보안을 위한 키 (원하시는 대로 수정 가능)
+# 세션 보안을 위한 키
 app.secret_key = 'paper_system_secure_99'
 
 # 📌 설정하신 비밀번호
@@ -52,7 +52,7 @@ def load_data():
             
             # 고시가는 숫자로 유지 (나중에 500으로 나누기 계산 위해)
             temp_df['고시가_원본'] = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
-            # 초기 화면 표시용 (콤마 없이 전달 후 JS에서 처리하거나 여기서 처리)
+            # 초기 화면 표시용 콤마 적용
             temp_df['고시가'] = temp_df['고시가_원본'].apply(lambda x: f"{int(x):,}" if x > 0 else "0")
             
             temp_df['시트명'] = sheet_name
@@ -95,18 +95,27 @@ def index():
                    keyword.lower() in item['시트명'].lower()
             ]
             
-            # 🔗 제지사별 URL 딕셔너리 적용
+            # 🔗 요청하신 제지사별 URL 딕셔너리 반영 (검색어 파라미터 포함)
             for item in results:
                 p, s = item['품목'], item['시트명']
-                if '두성' in s: item['url'] = f"https://www.doosungpaper.co.kr/product/search?q={p}"
-                elif '삼원' in s: item['url'] = "https://www.samwonpaper.com/product/paper/list"
-                elif '한국' in s: item['url'] = "https://www.hankukpaper.com/ko/product/listProductinfo.do"
-                elif '무림' in s: item['url'] = f"https://www.moorim.co.kr/ko/product/search.do?searchKeyword={p}"
-                elif '삼화' in s: item['url'] = "https://www.samwhapaper.com/"
-                elif '서경' in s: item['url'] = "https://wedesignpaper.com/#"
-                elif '한솔' in s: item['url'] = "https://www.hansolpaper.co.kr/product/insper"
-                elif '전주' in s: item['url'] = "https://jeonjupaper.com/publicationpaper"
-                else: item['url'] = f"https://www.google.com/search?q={s}+{p}"
+                if '두성' in s:
+                    item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
+                elif '삼원' in s:
+                    item['url'] = f"https://www.samwonpaper.com/product/paper/list?search.searchString={p}"
+                elif '한국' in s:
+                    item['url'] = "https://www.hankukpaper.com/ko/product/listProductinfo.do"
+                elif '무림' in s:
+                    item['url'] = "https://www.moorim.co.kr:13002/product/paper.php"
+                elif '삼화' in s:
+                    item['url'] = f"https://www.samwhapaper.com/product/samwhapaper/all?keyword={p}"
+                elif '서경' in s:
+                    item['url'] = f"https://wedesignpaper.com/search?type=shopping&sort=consensus_desc&keyword={p}"
+                elif '한솔' in s:
+                    item['url'] = "https://www.hansolpaper.co.kr/product/insper"
+                elif '전주' in s:
+                    item['url'] = "https://jeonjupaper.com/publicationpaper"
+                else:
+                    item['url'] = f"https://www.google.com/search?q={s}+{p}"
 
     return render_template('index.html', results=results, keyword=keyword, authenticated=True, logo_path='search.png')
 
@@ -116,5 +125,4 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # 로컬 테스트용 포트 5000
     app.run(host='0.0.0.0', port=5000, debug=True)
