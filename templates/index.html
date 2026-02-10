@@ -12,8 +12,10 @@
         .search-input { border: 2px solid #e2e8f0; outline: none; transition: all 0.2s; }
         .search-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
         .price-cell { cursor: pointer; color: #1e293b; font-weight: 700; font-family: 'Courier New', Courier, monospace; }
-        .price-cell:hover { color: #3b82f6; text-decoration: underline; }
         th { background-color: #f1f5f9; position: sticky; top: 0; z-index: 10; }
+        mark { background: #fef08a; color: #854d0e; padding: 0 2px; border-radius: 2px; }
+        .fav-item { cursor: pointer; transition: all 0.2s; }
+        .fav-item:hover { transform: translateY(-2px); border-color: #fbbf24; }
     </style>
 </head>
 <body class="min-h-screen py-8 px-4">
@@ -34,27 +36,38 @@
                 <img src="{{ url_for('static', filename=logo_path) }}" class="w-14 h-14 rounded-xl object-contain" onerror="this.src='https://via.placeholder.com/64'">
                 <div>
                     <h1 class="text-2xl font-black tracking-tight">종이 품목 검색</h1>
-                    <p class="text-xs text-gray-400 font-medium uppercase">Paper Search v2.2</p>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[10px] text-gray-400 font-medium uppercase tracking-widest">v3.5 Final</span>
+                        <span class="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-bold">📅 {{ last_updated }} 기준</span>
+                    </div>
                 </div>
             </div>
             
-            <div class="flex flex-col gap-2 p-4 bg-blue-50 rounded-2xl border border-blue-100 min-w-[300px]">
+            <div class="flex flex-col gap-2 p-4 bg-blue-50 rounded-2xl border border-blue-100 min-w-[280px]">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold text-blue-600">세네카 계산기</span>
                     <span id="seneca_result" class="text-xl font-black text-blue-700">0.00 mm</span>
                 </div>
-                <div class="flex gap-2">
-                    <input type="number" id="page_input" placeholder="페이지 수" oninput="calc()" class="w-full px-3 py-2 rounded-xl border-none text-sm shadow-sm">
-                </div>
-                <div id="selected_info" class="text-[10px] text-blue-400">품목을 선택해주세요.</div>
+                <input type="number" id="page_input" placeholder="페이지 수 입력" oninput="calc()" class="w-full px-3 py-2 rounded-xl border-none text-sm shadow-sm">
+                <div id="selected_info" class="text-[10px] text-blue-400 truncate w-60">품목을 선택해주세요.</div>
                 <input type="hidden" id="hidden_thick" value="0">
             </div>
         </header>
 
-        <form method="POST" action="/" class="relative">
-            <input type="text" name="keyword" placeholder="검색어를 입력하고 엔터를 누르세요..." value="{{ keyword }}" 
-                   class="w-full px-6 py-5 rounded-2xl search-input text-lg shadow-sm" autofocus>
-            <button type="submit" class="absolute right-3 top-2.5 px-8 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">검색</button>
+        <div id="favorites_bar" class="flex flex-wrap gap-2 empty:hidden">
+            </div>
+
+        <form method="POST" action="/" class="relative" id="searchForm">
+            <div class="relative w-full">
+                <input type="text" name="keyword" id="keywordInput" placeholder="품목명 또는 제지사 검색..." value="{{ keyword }}" 
+                       class="w-full px-6 py-5 rounded-2xl search-input text-lg shadow-sm" autofocus>
+                <button type="button" onclick="clearSearch()" id="clearBtn" class="absolute right-[110px] top-1/2 -translate-y-1/2 p-2 text-gray-300 hover:text-gray-500 hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+                <button type="submit" class="absolute right-3 top-2.5 px-8 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">검색</button>
+            </div>
         </form>
 
         {% if results %}
@@ -63,12 +76,13 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                            <th class="px-6 py-4 w-10">⭐</th>
                             <th class="px-6 py-4">품목</th>
                             <th class="px-6 py-4">사이즈</th>
-                            <th class="px-6 py-4 text-center">평량(g)</th>
+                            <th class="px-6 py-4 text-center">평량</th>
                             <th class="px-6 py-4">색상 및 패턴</th>
-                            <th class="px-6 py-4 text-center">두께(&mu;m)</th>
-                            <th class="px-6 py-4">고시가(R)</th>
+                            <th class="px-6 py-4 text-center">두께</th>
+                            <th class="px-6 py-4">금액(R)</th>
                             <th class="px-6 py-4">제지사</th>
                         </tr>
                     </thead>
@@ -76,7 +90,10 @@
                         {% for item in results %}
                         <tr class="hover:bg-blue-50/50 cursor-pointer transition-colors" 
                             onclick="selectRow(this, '{{ item.두께 }}', '{{ item.품목 }}', '{{ item.사이즈 }}', '{{ item.평량 }}')">
-                            <td class="px-6 py-4 font-bold text-gray-900">{{ item.품목 }}</td>
+                            <td class="px-4 py-4 text-center" onclick="event.stopPropagation();">
+                                <button onclick="toggleFavorite('{{ item.품목 }}', '{{ item.두께 }}', '{{ item.평량 }}')" class="text-gray-300 hover:text-yellow-400 text-xl transition-colors">★</button>
+                            </td>
+                            <td class="px-6 py-4 font-bold text-gray-900 highlight-target">{{ item.품목 }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ item.사이즈 }}</td>
                             <td class="px-6 py-4 text-center font-semibold text-gray-700">{{ item.평량 }}</td>
                             <td class="px-6 py-4 text-sm text-gray-400">{{ item.색상_및_패턴 }}</td>
@@ -89,7 +106,7 @@
                             </td>
                             <td class="px-6 py-4">
                                 <a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation();"
-                                   class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[11px] font-bold text-gray-500 hover:text-blue-600 hover:border-blue-600 transition-all">
+                                   class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[11px] font-bold text-gray-500 hover:text-blue-600 hover:border-blue-600 transition-all highlight-target">
                                     {{ item.시트명 }} 🔗
                                 </a>
                             </td>
@@ -100,8 +117,13 @@
             </div>
         </div>
         {% elif keyword %}
-        <div class="p-20 text-center glass-card rounded-3xl border border-dashed border-gray-200 text-gray-400">
-            "{{ keyword }}"에 대한 검색 결과가 없습니다.
+        <div class="p-20 text-center glass-card rounded-3xl border border-dashed border-gray-200">
+            <p class="text-gray-400 mb-6">"{{ keyword }}"에 대한 검색 결과가 엑셀 데이터에 없습니다.</p>
+            <a href="https://www.google.com/search?q={{ keyword }}+종이" target="_blank" 
+               class="inline-flex items-center gap-2 px-8 py-4 bg-white border-2 border-gray-200 rounded-2xl font-bold text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-all shadow-sm">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
+                구글에서 "{{ keyword }}" 검색하기
+            </a>
         </div>
         {% endif %}
         
@@ -112,6 +134,76 @@
     {% endif %}
 
     <script>
+        // ❌ 검색어 삭제 기능
+        const kwInput = document.getElementById('keywordInput');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        if(kwInput) {
+            kwInput.addEventListener('input', () => {
+                clearBtn.style.display = kwInput.value ? 'block' : 'none';
+            });
+            window.onload = () => {
+                if(kwInput.value) clearBtn.style.display = 'block';
+                highlight();
+                renderFavorites();
+            };
+        }
+
+        function clearSearch() {
+            kwInput.value = '';
+            clearBtn.style.display = 'none';
+            kwInput.focus();
+        }
+
+        // ⭐ 즐겨찾기 기능 (LocalStorage 사용)
+        function toggleFavorite(name, thick, gram) {
+            let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            const exists = favs.findIndex(f => f.name === name && f.gram === gram);
+            
+            if(exists > -1) {
+                favs.splice(exists, 1);
+            } else {
+                favs.push({ name, thick, gram });
+            }
+            localStorage.setItem('paper_favs', JSON.stringify(favs));
+            renderFavorites();
+        }
+
+        function renderFavorites() {
+            const container = document.getElementById('favorites_bar');
+            if(!container) return;
+            const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            container.innerHTML = favs.map(f => `
+                <div class="fav-item flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl shadow-sm" onclick="quickSelect('${f.thick}', '${f.name}', '${f.gram}')">
+                    <span class="text-yellow-400">★</span>
+                    <span class="text-xs font-bold text-gray-700">${f.name} ${f.gram}g</span>
+                    <button onclick="event.stopPropagation(); removeFav('${f.name}', '${f.gram}')" class="text-gray-300 hover:text-red-400 ml-1">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFav(name, gram) {
+            let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            favs = favs.filter(f => !(f.name === name && f.gram === gram));
+            localStorage.setItem('paper_favs', JSON.stringify(favs));
+            renderFavorites();
+        }
+
+        function quickSelect(thick, name, gram) {
+            document.getElementById('hidden_thick').value = thick;
+            document.getElementById('selected_info').innerText = `${name} (${gram}g) 선택됨`;
+            calc();
+        }
+
+        // 🔍 기타 기능들
+        function highlight() {
+            const keyword = document.getElementById('keywordInput').value.trim();
+            if (!keyword) return;
+            const targets = document.querySelectorAll('.highlight-target');
+            const regex = new RegExp(`(${keyword})`, 'gi');
+            targets.forEach(t => { t.innerHTML = t.innerHTML.replace(regex, '<mark>$1</mark>'); });
+        }
+
         function selectRow(el, thick, name, size, gram) {
             document.getElementById('hidden_thick').value = thick;
             document.getElementById('selected_info').innerText = `${name} (${size}) ${gram}g 선택됨`;
@@ -130,10 +222,8 @@
         function togglePrice(el) {
             const raw = parseFloat(el.dataset.val);
             if(isNaN(raw)) return;
-            
             if(el.dataset.mode === "R") {
-                const single = (raw / 500);
-                el.innerText = single.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}) + " (낱장)";
+                el.innerText = (raw / 500).toLocaleString(undefined, {maximumFractionDigits: 1}) + " (낱장)";
                 el.dataset.mode = "S";
                 el.classList.add('text-blue-600');
             } else {
