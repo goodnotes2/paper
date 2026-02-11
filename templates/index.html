@@ -10,10 +10,10 @@
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.5rem; }
         .fav-star.active { color: #facc15; }
-        .search-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
         th.sortable { cursor: pointer; position: relative; }
         th.sortable:hover { background-color: #f1f5f9; }
-        th.sortable::after { content: '↕'; position: absolute; right: 8px; opacity: 0.3; }
+        th.sortable::after { content: '↕'; position: absolute; right: 4px; opacity: 0.3; }
+        .price-toggle { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -47,7 +47,7 @@
         <div id="favorites_bar" class="flex flex-wrap gap-2 empty:hidden"></div>
 
         <form method="POST" class="relative">
-            <input type="text" name="keyword" id="keywordInput" value="{{ keyword }}" placeholder="종이 이름 검색..." class="w-full p-5 glass-card search-input text-lg shadow-md pr-32">
+            <input type="text" name="keyword" id="keywordInput" value="{{ keyword }}" placeholder="종이 이름 검색..." class="w-full p-5 glass-card text-lg shadow-md pr-32">
             <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
                 <button type="button" onclick="clearSearch()" id="clearBtn" class="p-2 text-gray-300 hover:text-gray-500 {{ 'hidden' if not keyword }}">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -62,11 +62,12 @@
                 <thead class="bg-gray-50 border-b text-[10px] text-gray-400 uppercase font-bold">
                     <tr>
                         <th class="p-4 w-12 text-center text-lg">⭐</th>
-                        <th class="p-4">품목 / 제지사</th>
+                        <th class="p-4">품목</th>
                         <th class="p-4 sortable" onclick="sortTable(2)">사이즈</th>
                         <th class="p-4 sortable text-center" onclick="sortTable(3)">평량</th>
                         <th class="p-4 text-center">두께</th>
                         <th class="p-4 text-right">고시가(R)</th>
+                        <th class="p-4 text-center">제지사</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y text-sm">
@@ -74,27 +75,20 @@
                     <tr class="hover:bg-blue-50 cursor-pointer transition-colors" onclick="selectRow(this, '{{ item.두께 }}', '{{ item.품목 }}', '{{ item.평량 }}', '{{ item.고시가 }}')">
                         <td class="p-4 text-center">
                             <button onclick="event.stopPropagation(); toggleFavorite('{{ item.품목 }}', '{{ item.두께 }}', '{{ item.평량 }}', '{{ item.고시가 }}', this)" 
-                                    class="fav-star text-gray-300 text-2xl transition-colors">★</button>
+                                    class="fav-star text-gray-300 text-2xl">★</button>
                         </td>
-                        <td class="p-4">
-                            <div class="font-bold text-gray-800">{{ item.품목 }}</div>
-                            <div class="text-[10px] text-gray-400 uppercase tracking-tighter">{{ item.시트명 }}</div>
-                        </td>
+                        <td class="p-4 font-bold text-gray-800">{{ item.품목 }}</td>
                         <td class="p-4 text-gray-500">{{ item.사이즈 }}</td>
                         <td class="p-4 text-center font-semibold text-gray-600">{{ item.평량 }}g</td>
                         <td class="p-4 text-center font-bold text-blue-500">{{ item.두께 }}μm</td>
-                        <td class="p-4 font-mono text-right font-bold text-gray-700">{{ item.고시가 }}</td>
+                        <td class="p-4 font-mono text-right font-bold text-gray-700 price-toggle" onclick="event.stopPropagation(); togglePrice(this, '{{ item.고시가 }}')">{{ item.고시가 }}</td>
+                        <td class="p-4 text-center">
+                            <a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" class="text-[10px] bg-white border border-gray-200 px-3 py-1 rounded shadow-sm hover:bg-gray-50 active:scale-95 inline-block">{{ item.시트명 }} 🔗</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-        {% elif keyword %}
-        <div class="text-center p-12 glass-card border-dashed border-2 border-gray-200">
-            <p class="text-gray-400 mb-6 font-medium">"{{ keyword }}"에 대한 결과가 없습니다.</p>
-            <a href="https://www.google.com/search?q={{ keyword }}+종이" target="_blank" class="inline-flex items-center gap-2 px-8 py-4 bg-white border border-gray-200 rounded-2xl font-bold text-gray-600 shadow-sm hover:border-blue-500 hover:text-blue-600 transition-all">
-                <img src="https://www.google.com/favicon.ico" class="w-4 h-4"> 구글에서 검색하기
-            </a>
         </div>
         {% endif %}
     </div>
@@ -103,12 +97,22 @@
     <script>
         window.onload = () => { renderFavorites(); };
 
-        // ⭐ 즐겨찾기 로직 (가격 데이터 포함)
+        // 💰 고시가 클릭 시 나누기 500 (낱장가 표시)
+        function togglePrice(el, original) {
+            const raw = parseInt(original.replace(/,/g, ''));
+            if (el.innerText.includes('/')) {
+                el.innerText = original;
+            } else {
+                const sheetPrice = Math.round(raw / 500);
+                el.innerText = sheetPrice.toLocaleString() + ' / 낱장';
+            }
+        }
+
+        // ⭐ 즐겨찾기 로직
         function toggleFavorite(name, thick, gram, price, btn) {
             let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             const id = name + gram;
             const index = favs.findIndex(f => f.id === id);
-
             if (index > -1) {
                 favs.splice(index, 1);
                 btn.classList.remove('active');
@@ -134,23 +138,11 @@
             `).join('');
         }
 
-        function removeFav(id) {
-            let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
-            favs = favs.filter(f => f.id !== id);
-            localStorage.setItem('paper_favs', JSON.stringify(favs));
-            renderFavorites();
-        }
-
-        // ⚡ 클릭 시 세네카 반영 + 고시가 표시
         function quickSelect(thick, name, gram, price) {
             document.getElementById('hidden_thick').value = thick;
             calc();
             document.getElementById('selected_info').innerText = `${name} (${gram}g)`;
             document.getElementById('fav_price_display').innerText = `고시가(R): ${price}원`;
-            
-            const infoBox = document.getElementById('selected_info_box');
-            infoBox.classList.add('bg-yellow-50');
-            setTimeout(() => infoBox.classList.remove('bg-yellow-50'), 300);
         }
 
         function selectRow(el, thick, name, gram, price) {
@@ -159,22 +151,22 @@
             quickSelect(thick, name, gram, price);
         }
 
+        function removeFav(id) {
+            let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            favs = favs.filter(f => f.id !== id);
+            localStorage.setItem('paper_favs', JSON.stringify(favs));
+            renderFavorites();
+        }
+
         // ↕ 정렬 기능
-        let sortDirections = [true, true, true, true, true, true];
         function sortTable(colIdx) {
             const tbody = document.querySelector("#resultTable tbody");
-            const rows = Array.from(tbody.querySelectorAll("tr"));
-            const dir = sortDirections[colIdx];
-
+            const rows = Array.from(tbody.rows);
             rows.sort((a, b) => {
                 let valA = a.cells[colIdx].innerText.replace(/[^0-9.]/g, '');
                 let valB = b.cells[colIdx].innerText.replace(/[^0-9.]/g, '');
-                if (!isNaN(valA) && !isNaN(valB) && valA !== "" && valB !== "") {
-                    return dir ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
-                }
-                return dir ? a.cells[colIdx].innerText.localeCompare(b.cells[colIdx].innerText) : b.cells[colIdx].innerText.localeCompare(a.cells[colIdx].innerText);
+                return parseFloat(valA) - parseFloat(valB);
             });
-            sortDirections[colIdx] = !dir;
             rows.forEach(row => tbody.appendChild(row));
         }
 
