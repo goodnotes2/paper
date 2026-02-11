@@ -1,11 +1,10 @@
 import pandas as pd
-from flask import Flask, render_template, request, session, redirect, url_for, flash
+from Flask import Flask, render_template, request, session, redirect, url_for, flash
 import os
 from datetime import datetime
 
 app = Flask(__name__)
-# 세션 보안을 위해 고정된 secret_key 사용
-app.secret_key = 'paper_system_final_v4_secure'
+app.secret_key = 'paper_system_secure_v5'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -47,14 +46,13 @@ load_data()
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    # 로그인 상태 체크 강화
     if request.method == 'POST' and 'password' in request.form:
         if request.form.get('password') == SITE_PASSWORD:
             session['authenticated'] = True
-            session.permanent = True # 세션 유지
+            session.permanent = True
             return redirect(url_for('index'))
         else:
-            return render_template('index.html', authenticated=False, error="비밀번호가 틀렸습니다.")
+            return render_template('index.html', authenticated=False, error="비밀번호가 일치하지 않습니다.")
 
     if not session.get('authenticated'):
         return render_template('index.html', authenticated=False)

@@ -20,7 +20,7 @@
     <div class="max-w-md mx-auto mt-20 p-8 glass-card shadow-xl text-center">
         <h2 class="text-xl font-bold mb-6">보안 접속</h2>
         <form method="POST" class="space-y-4">
-            <input type="password" name="password" placeholder="비밀번호 입력 (03877)" class="w-full px-4 py-3 border rounded-xl text-center focus:outline-blue-500">
+            <input type="password" name="password" placeholder="비밀번호를 입력하세요" class="w-full px-4 py-3 border rounded-xl text-center focus:outline-blue-500">
             {% if error %}<p class="text-red-500 text-xs">{{ error }}</p>{% endif %}
             <button type="submit" class="w-full py-3 bg-black text-white rounded-xl font-bold">접속하기</button>
         </form>
@@ -31,15 +31,19 @@
             <div class="md:col-span-2 p-6 glass-card flex items-center gap-4">
                 <div class="text-2xl font-black">종이 검색 <span class="text-xs text-gray-400 font-normal ml-2">📅 {{ last_updated }}</span></div>
             </div>
-            <div class="p-6 glass-card bg-blue-50 border-blue-100 flex flex-col justify-center">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-xs font-bold text-blue-600">세네카 결과</span>
-                    <span id="seneca_result" class="text-xl font-black text-blue-700">0.00 mm</span>
+            <div class="p-6 glass-card bg-blue-600 text-white shadow-lg flex flex-col justify-center">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold opacity-80">세네카 결과</span>
+                    <span id="seneca_result" class="text-2xl font-black">0.00 mm</span>
                 </div>
-                <input type="number" id="page_input" oninput="calc()" placeholder="페이지 수 입력" class="w-full p-2 rounded-lg border-none shadow-sm text-sm mb-2">
-                <div id="selected_info_box" class="pt-2 border-t border-blue-100 text-[10px]">
-                    <div id="selected_info" class="text-blue-500 font-bold truncate">품목을 선택해주세요.</div>
-                    <div id="fav_price_display" class="text-gray-600 font-bold">고시가: -</div>
+                <input type="number" id="page_input" oninput="calc()" placeholder="페이지 수" class="w-full p-2 rounded-lg border-none text-black text-sm mb-3 shadow-inner">
+                
+                <div id="selected_info_box" class="pt-3 border-t border-white/20 space-y-1">
+                    <div id="selected_info" class="text-xs font-bold truncate opacity-90">선택된 종이 없음</div>
+                    <div class="flex justify-between items-end">
+                        <div id="fav_size_display" class="text-sm font-bold">사이즈: -</div>
+                        <div id="fav_price_display" class="text-lg font-black text-yellow-300">0원</div>
+                    </div>
                 </div>
                 <input type="hidden" id="hidden_thick" value="0">
             </div>
@@ -48,12 +52,12 @@
         <div id="favorites_bar" class="flex flex-wrap gap-2 empty:hidden"></div>
 
         <form method="POST" class="relative">
-            <input type="text" name="keyword" id="keywordInput" value="{{ keyword }}" placeholder="종이 이름이나 제지사 검색..." class="w-full p-5 glass-card text-lg shadow-md pr-32">
+            <input type="text" name="keyword" id="keywordInput" value="{{ keyword }}" placeholder="검색어를 입력하세요..." class="w-full p-5 glass-card text-lg shadow-md pr-32">
             <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
                 <button type="button" onclick="clearSearch()" id="clearBtn" class="p-2 text-gray-300 hover:text-gray-500 {{ 'hidden' if not keyword }}">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
-                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700">검색</button>
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">검색</button>
             </div>
         </form>
 
@@ -62,7 +66,7 @@
             <table class="w-full text-left" id="resultTable">
                 <thead class="bg-gray-50 border-b text-[10px] text-gray-400 uppercase font-bold">
                     <tr>
-                        <th class="p-4 w-12 text-center">⭐</th>
+                        <th class="p-4 w-12 text-center text-lg">⭐</th>
                         <th class="p-4">품목</th>
                         <th class="p-4 sortable" onclick="sortTable(2)">사이즈</th>
                         <th class="p-4 sortable text-center" onclick="sortTable(3)">평량</th>
@@ -73,9 +77,9 @@
                 </thead>
                 <tbody class="divide-y text-sm">
                     {% for item in results %}
-                    <tr class="hover:bg-blue-50 cursor-pointer transition-colors" onclick="selectRow(this, '{{ item.두께 }}', '{{ item.품목 }}', '{{ item.평량 }}', '{{ item.고시가 }}')">
+                    <tr class="hover:bg-blue-50 cursor-pointer transition-colors" onclick="selectRow(this, '{{ item.두께 }}', '{{ item.품목 }}', '{{ item.평량 }}', '{{ item.고시가 }}', '{{ item.사이즈 }}', '{{ item.시트명 }}')">
                         <td class="p-4 text-center">
-                            <button onclick="event.stopPropagation(); toggleFavorite('{{ item.품목 }}', '{{ item.두께 }}', '{{ item.평량 }}', '{{ item.고시가 }}', '{{ item.시트명 }}', this)" 
+                            <button onclick="event.stopPropagation(); toggleFavorite('{{ item.품목 }}', '{{ item.두께 }}', '{{ item.평량 }}', '{{ item.고시가 }}', '{{ item.사이즈 }}', '{{ item.시트명 }}', this)" 
                                     class="fav-star text-gray-300 text-2xl">★</button>
                         </td>
                         <td class="p-4 font-bold text-gray-800">{{ item.품목 }}</td>
@@ -104,17 +108,15 @@
             else { el.innerText = Math.round(raw / 500).toLocaleString() + ' / 낱장'; }
         }
 
-        // ⭐ 즐겨찾기 ID 생성 로직 강화 (시트명 추가)
-        function toggleFavorite(name, thick, gram, price, sheet, btn) {
+        function toggleFavorite(name, thick, gram, price, size, sheet, btn) {
             let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
-            const id = name + "_" + gram + "_" + sheet; // 완전 고유 ID
+            const id = name + "_" + gram + "_" + sheet;
             const idx = favs.findIndex(f => f.id === id);
-
             if (idx > -1) {
                 favs.splice(idx, 1);
                 btn.classList.remove('active');
             } else {
-                favs.push({ id, name, thick, gram, price, sheet });
+                favs.push({ id, name, thick, gram, price, size, sheet });
                 btn.classList.add('active');
             }
             localStorage.setItem('paper_favs', JSON.stringify(favs));
@@ -126,21 +128,19 @@
             if(!bar) return;
             const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             
-            // 현재 리스트에 있는 별표 상태 동기화
             document.querySelectorAll('.fav-star').forEach(starBtn => {
                 const tr = starBtn.closest('tr');
                 if(!tr) return;
                 const name = tr.cells[1].innerText;
                 const gram = tr.cells[3].innerText.replace('g', '');
                 const sheet = tr.cells[6].innerText.replace(' 🔗', '');
-                const id = name + "_" + gram + "_" + sheet;
-                if(favs.some(f => f.id === id)) starBtn.classList.add('active');
+                if(favs.some(f => f.id === name + "_" + gram + "_" + sheet)) starBtn.classList.add('active');
                 else starBtn.classList.remove('active');
             });
 
             bar.innerHTML = favs.map(f => `
                 <div class="flex items-center gap-2 px-4 py-2 bg-white border border-yellow-200 rounded-full shadow-sm cursor-pointer hover:bg-yellow-50" 
-                     onclick="quickSelect('${f.thick}', '${f.name}', '${f.gram}', '${f.price}')">
+                     onclick="quickSelect('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.size}')">
                     <span class="text-yellow-400 text-xs">★</span>
                     <span class="text-xs font-bold text-gray-700">${f.name} (${f.gram}g)</span>
                     <button onclick="event.stopPropagation(); removeFav('${f.id}')" class="text-gray-300 hover:text-red-500 ml-1">×</button>
@@ -148,17 +148,18 @@
             `).join('');
         }
 
-        function quickSelect(thick, name, gram, price) {
+        function quickSelect(thick, name, gram, price, size) {
             document.getElementById('hidden_thick').value = thick;
             calc();
             document.getElementById('selected_info').innerText = `${name} (${gram}g)`;
-            document.getElementById('fav_price_display').innerText = `고시가(R): ${price}원`;
+            document.getElementById('fav_size_display').innerText = `사이즈: ${size}`;
+            document.getElementById('fav_price_display').innerText = `${price}원`;
         }
 
-        function selectRow(el, thick, name, gram, price) {
+        function selectRow(el, thick, name, gram, price, size, sheet) {
             document.querySelectorAll('tr').forEach(r => r.classList.remove('bg-blue-100'));
             el.classList.add('bg-blue-100');
-            quickSelect(thick, name, gram, price);
+            quickSelect(thick, name, gram, price, size);
         }
 
         function removeFav(id) {
