@@ -31,12 +31,14 @@
             <div class="md:col-span-2 p-8 glass-card flex items-center justify-between shadow-sm">
                 <div class="text-3xl font-black tracking-tight text-gray-900">종이 검색 <span class="text-[10px] text-gray-400 font-normal ml-3">📅 {{ last_updated }}</span></div>
             </div>
+            
             <div class="p-6 glass-card bg-blue-600 text-white shadow-lg flex flex-col justify-center">
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-[11px] font-bold opacity-80 uppercase tracking-widest">Seneca Result</span>
                     <span id="seneca_result" class="text-3xl font-black">0.00 mm</span>
                 </div>
                 <input type="number" id="page_input" oninput="calc()" placeholder="페이지 수 입력" class="w-full p-2.5 rounded-xl border-none text-black text-sm mb-4 shadow-inner outline-none focus:ring-2 focus:ring-yellow-400">
+                
                 <div id="selected_info_box" class="pt-4 border-t border-white/20 space-y-2">
                     <div id="selected_info" class="text-[11px] font-bold truncate opacity-90 bg-white/10 p-2 rounded-lg text-center">선택된 종이가 없습니다</div>
                     <div class="flex justify-between items-center px-1">
@@ -67,7 +69,8 @@
                     <tr>
                         <th class="p-4 w-12 text-center text-lg">⭐</th>
                         <th class="p-4">품목 / 제지사</th>
-                        <th class="p-4">색상 / 패턴</th> <th class="p-4 sortable" onclick="sortTable(3)">사이즈</th>
+                        <th class="p-4">색상 / 패턴</th>
+                        <th class="p-4 sortable" onclick="sortTable(3)">사이즈</th>
                         <th class="p-4 sortable text-center" onclick="sortTable(4)">평량</th>
                         <th class="p-4 text-center">두께</th>
                         <th class="p-4 text-right">고시가(R)</th>
@@ -87,7 +90,8 @@
                             <div class="font-bold text-gray-800">{{ item.품목 }}</div>
                             <div class="text-[10px] text-gray-400">{{ item.시트명 }}</div>
                         </td>
-                        <td class="p-4 text-gray-600 font-medium">{{ item.색상 if item.색상 != 'nan' else '-' }}</td> <td class="p-4 text-gray-500">{{ item.사이즈 }}</td>
+                        <td class="p-4 text-gray-600 font-medium">{{ item.색상 }}</td>
+                        <td class="p-4 text-gray-500">{{ item.사이즈 }}</td>
                         <td class="p-4 text-center">{{ item.평량 }}g</td>
                         <td class="p-4 text-center font-bold text-blue-500">{{ item.두께 }}μm</td>
                         <td class="p-4 font-mono text-right font-bold text-gray-700 price-toggle" onclick="event.stopPropagation(); togglePrice(this, '{{ item.고시가 }}')">{{ item.고시가 }}</td>
@@ -114,7 +118,6 @@
 
         function toggleFavorite(name, thick, gram, price, size, sheet, color, btn) {
             let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
-            // ⚡ ID에 색상(color) 정보를 추가하여 색상별 별도 선택 가능하게 함
             const id = name + "_" + gram + "_" + sheet + "_" + size + "_" + color;
             const idx = favs.findIndex(f => f.id === id);
 
@@ -134,6 +137,7 @@
             if(!bar) return;
             const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             
+            // 테이블 별표 노란색 동기화 (정확한 ID 매칭)
             document.querySelectorAll('tr[data-id]').forEach(tr => {
                 const starBtn = tr.querySelector('.fav-star');
                 const rowId = tr.getAttribute('data-id');
@@ -146,7 +150,7 @@
                      onclick="quickSelect('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.size}', '${f.color}')">
                     <span class="text-yellow-400 text-sm">★</span>
                     <div class="flex flex-col leading-tight">
-                        <span class="text-[11px] font-black text-gray-700">${f.name} ${f.color != 'nan' ? '['+f.color+']' : ''} (${f.gram}g)</span>
+                        <span class="text-[11px] font-black text-gray-700">${f.name} ${f.color != '-' ? '['+f.color+']' : ''} (${f.gram}g)</span>
                         <span class="text-[9px] text-gray-400">${f.size}</span>
                     </div>
                     <button onclick="event.stopPropagation(); removeFav('${f.id}')" class="text-gray-300 hover:text-red-500 ml-1 text-lg font-bold">×</button>
@@ -157,7 +161,7 @@
         function quickSelect(thick, name, gram, price, size, color) {
             document.getElementById('hidden_thick').value = thick;
             calc();
-            const colorTxt = (color && color !== 'nan') ? ` [${color}]` : '';
+            const colorTxt = (color && color !== '-') ? ` [${color}]` : '';
             document.getElementById('selected_info').innerText = `${name}${colorTxt} (${gram}g)`;
             document.getElementById('fav_size_display').innerText = `규격: ${size}`;
             document.getElementById('fav_price_display').innerText = `${price}원`;
@@ -180,9 +184,9 @@
             const tbody = document.querySelector("#resultTable tbody");
             const rows = Array.from(tbody.rows);
             rows.sort((a, b) => {
-                let vA = parseFloat(a.cells[n].innerText.replace(/[^0-9.]/g, '')) || 0;
-                let vB = parseFloat(b.cells[n].innerText.replace(/[^0-9.]/g, '')) || 0;
-                return vA - vB;
+                let vA = a.cells[n].innerText.replace(/[^0-9.]/g, '');
+                let vB = b.cells[n].innerText.replace(/[^0-9.]/g, '');
+                return (parseFloat(vA) || 0) - (parseFloat(vB) || 0);
             });
             rows.forEach(r => tbody.appendChild(r));
         }

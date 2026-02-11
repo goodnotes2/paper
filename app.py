@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_final_v8_color_fix'
+app.secret_key = 'paper_system_final_v9_perfect_fav'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -31,18 +31,20 @@ def load_data():
                 '두께': next((c for c in df.columns if '두께' in c), '두께')
             }
             temp_df = pd.DataFrame()
-            temp_df['품목'] = df[col_map['품목']].astype(str)
-            # 색상 정보가 없는 경우 빈칸 처리
-            temp_df['색상'] = df[col_map['색상']].astype(str) if col_map['색상'] in df.columns else ""
-            temp_df['사이즈'] = df[col_map['사이즈']].astype(str)
-            temp_df['평량'] = df[col_map['평량']].astype(str)
-            temp_df['두께'] = df[col_map['두께']].astype(str)
+            temp_df['품목'] = df[col_map['품목']].astype(str).str.strip()
+            # 색상 정보 정제 (nan이나 공백을 '-'로 통일)
+            temp_df['색상'] = df[col_map['색상']].astype(str).str.strip() if col_map['색상'] in df.columns else "-"
+            temp_df['색상'] = temp_df['색상'].replace(['nan', 'None', ''], '-')
+            
+            temp_df['사이즈'] = df[col_map['사이즈']].astype(str).str.strip()
+            temp_df['평량'] = df[col_map['평량']].astype(str).str.strip()
+            temp_df['두께'] = df[col_map['두께']].astype(str).str.strip()
             temp_df['고시가_원본'] = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
             temp_df['고시가'] = temp_df['고시가_원본'].apply(lambda x: f"{int(x):,}" if x > 0 else "0")
-            temp_df['시트명'] = sheet_name
+            temp_df['시트명'] = sheet_name.strip()
             combined_list.append(temp_df)
         if combined_list:
-            cached_data = pd.concat(combined_list, ignore_index=True).fillna('').to_dict('records')
+            cached_data = pd.concat(combined_list, ignore_index=True).fillna('-').to_dict('records')
     except Exception as e: print(f"Error: {e}")
 
 load_data()
