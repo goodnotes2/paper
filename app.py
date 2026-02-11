@@ -1,10 +1,10 @@
 import pandas as pd
-from Flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for
 import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_v12_final'
+app.secret_key = 'paper_system_v12_final_fix'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -23,7 +23,6 @@ def load_data():
             df.columns = [str(col).strip() for col in df.columns]
             df = df.ffill()
             
-            # 컬럼 매핑 (색상/패턴 포함)
             col_map = {
                 '품목': next((c for c in df.columns if '품목' in c), '품목'),
                 '색상': next((c for c in df.columns if '색상' in c or '패턴' in c), '색상'),
@@ -35,16 +34,16 @@ def load_data():
             
             temp_df = pd.DataFrame()
             temp_df['품목'] = df[col_map['품목']].astype(str).str.strip()
-            # 색상/패턴 데이터 정제
+            # 색상/패턴 데이터 정제 (공백 및 nan 처리)
             if col_map['색상'] in df.columns:
                 temp_df['색상'] = df[col_map['색상']].astype(str).str.strip().replace(['nan', 'None', ''], '-')
             else:
                 temp_df['색상'] = "-"
             
             temp_df['사이즈'] = df[col_map['사이즈']].astype(str).str.strip()
-            # 평량 소수점 제거 (100.0 -> 100)
+            # 평량 소수점 제거 및 공백 제거 (100.0 -> 100)
             temp_df['평량'] = df[col_map['평량']].astype(str).str.strip().str.replace(r'\.0$', '', regex=True)
-            # 두께 데이터 정제
+            # 두께 데이터 정제 (데이터 없을 시 0으로 통일)
             temp_df['두께'] = df[col_map['두께']].astype(str).str.strip().replace(['nan', 'None', ''], '0')
             
             temp_df['고시가_원본'] = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
@@ -68,9 +67,9 @@ def index():
         return render_template('index.html', authenticated=False)
 
     keyword = request.form.get('keyword', '').strip() if request.method == 'POST' else ""
+    # 검색 시 품목명뿐만 아니라 색상으로도 검색 가능하게 수정
     results = [item for item in cached_data if keyword.lower() in item['품목'].lower() or keyword.lower() in item['색상'].lower()] if keyword else []
     
-    # 제조사별 링크 설정
     for item in results:
         p, s = item['품목'], item['시트명']
         if '두성' in s: item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"

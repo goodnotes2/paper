@@ -108,7 +108,7 @@
 
         function toggleFavorite(name, thick, gram, price, size, sheet, color, btn) {
             let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
-            // ID 매칭을 위해 공백 및 불필요한 문자 제거
+            // 매칭을 위해 모든 공백 제거한 ID 생성
             const id = `${name}_${gram}_${sheet}_${size}_${color}`.replace(/\s+/g, '');
             const idx = favs.findIndex(f => f.id === id);
 
@@ -126,7 +126,6 @@
             if(!bar) return;
             const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             
-            // 리스트의 별표 상태 동기화
             document.querySelectorAll('tr[data-id]').forEach(tr => {
                 const starBtn = tr.querySelector('.fav-star');
                 const rowId = tr.getAttribute('data-id').replace(/\s+/g, '');
