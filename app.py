@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_final_v7_size_fix'
+app.secret_key = 'paper_system_final_v8_color_fix'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -24,6 +24,7 @@ def load_data():
             df = df.ffill()
             col_map = {
                 '품목': next((c for c in df.columns if '품목' in c), '품목'),
+                '색상': next((c for c in df.columns if '색상' in c or '패턴' in c), '색상'),
                 '사이즈': next((c for c in df.columns if '사이즈' in c or '규격' in c), '사이즈'),
                 '평량': next((c for c in df.columns if '평량' in c), '평량'),
                 '고시가': next((c for c in df.columns if '고시가' in c), '고시가'),
@@ -31,6 +32,8 @@ def load_data():
             }
             temp_df = pd.DataFrame()
             temp_df['품목'] = df[col_map['품목']].astype(str)
+            # 색상 정보가 없는 경우 빈칸 처리
+            temp_df['색상'] = df[col_map['색상']].astype(str) if col_map['색상'] in df.columns else ""
             temp_df['사이즈'] = df[col_map['사이즈']].astype(str)
             temp_df['평량'] = df[col_map['평량']].astype(str)
             temp_df['두께'] = df[col_map['두께']].astype(str)
@@ -62,13 +65,11 @@ def index():
     if request.method == 'POST':
         keyword = request.form.get('keyword', '').strip()
         if keyword:
-            results = [item for item in cached_data if keyword.lower() in item['품목'].lower() or keyword.lower() in item['시트명'].lower()]
+            results = [item for item in cached_data if keyword.lower() in item['품목'].lower() or keyword.lower() in item['시트명'].lower() or keyword.lower() in item['색상'].lower()]
             for item in results:
                 p, s = item['품목'], item['시트명']
                 if '두성' in s: item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
                 elif '삼원' in s: item['url'] = f"https://www.samwonpaper.com/product/paper/list?search.searchString={p}"
-                elif '무림' in s: item['url'] = "https://www.moorim.co.kr:13002/product/paper.php"
-                elif '한솔' in s: item['url'] = "https://www.hansolpaper.co.kr/product/insper"
                 else: item['url'] = f"https://www.google.com/search?q={s}+{p}"
     return render_template('index.html', results=results, keyword=keyword, authenticated=True, last_updated=last_updated)
 
