@@ -9,7 +9,6 @@
     <style>
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.5rem; }
-        /* 별표 활성화 색상: 노란색 */
         .fav-star.active { color: #facc15 !important; }
         th.sortable { cursor: pointer; position: relative; }
         th.sortable::after { content: '↕'; position: absolute; right: 4px; opacity: 0.3; }
@@ -80,7 +79,7 @@
                 <tbody class="divide-y text-sm">
                     {% for item in results %}
                     <tr class="hover:bg-blue-50 cursor-pointer transition-colors" 
-                        data-id="{{ item.품목 }}_{{ item.평량 }}_{{ item.시트명 }}"
+                        data-id="{{ item.품목 }}_{{ item.평량 }}_{{ item.시트명 }}_{{ item.사이즈 }}"
                         onclick="selectRow(this, '{{ item.두께 }}', '{{ item.품목 }}', '{{ item.평량 }}', '{{ item.고시가 }}', '{{ item.사이즈 }}', '{{ item.시트명 }}')">
                         <td class="p-4 text-center">
                             <button onclick="event.stopPropagation(); toggleFavorite('{{ item.품목 }}', '{{ item.두께 }}', '{{ item.평량 }}', '{{ item.고시가 }}', '{{ item.사이즈 }}', '{{ item.시트명 }}', this)" 
@@ -117,8 +116,8 @@
 
         function toggleFavorite(name, thick, gram, price, size, sheet, btn) {
             let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
-            // 완전 고유 ID 생성 (누락 방지)
-            const id = name + "_" + gram + "_" + sheet;
+            // ⚡ ID 생성 시 사이즈(size) 정보를 포함하여 사이즈별 별도 선택 가능하게 함
+            const id = name + "_" + gram + "_" + sheet + "_" + size;
             const idx = favs.findIndex(f => f.id === id);
 
             if (idx > -1) {
@@ -137,7 +136,7 @@
             if(!bar) return;
             const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             
-            // 1. 테이블 내 모든 별표 상태 초기화 후 동기화
+            // 테이블 별표 동기화
             document.querySelectorAll('tr[data-id]').forEach(tr => {
                 const starBtn = tr.querySelector('.fav-star');
                 const rowId = tr.getAttribute('data-id');
@@ -145,13 +144,16 @@
                 else starBtn.classList.remove('active');
             });
 
-            // 2. 상단 즐겨찾기 바 렌더링
+            // 상단 바 렌더링 (사이즈 정보 추가 노출)
             bar.innerHTML = favs.map(f => `
-                <div class="flex items-center gap-2 px-5 py-2.5 bg-white border border-yellow-200 rounded-2xl shadow-sm cursor-pointer hover:bg-yellow-50 active:scale-95 transition-all group" 
+                <div class="flex items-center gap-2 px-4 py-2 bg-white border border-yellow-200 rounded-2xl shadow-sm cursor-pointer hover:bg-yellow-50 active:scale-95 transition-all" 
                      onclick="quickSelect('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.size}')">
                     <span class="text-yellow-400 text-sm">★</span>
-                    <span class="text-xs font-black text-gray-700">${f.name} (${f.gram}g)</span>
-                    <button onclick="event.stopPropagation(); removeFav('${f.id}')" class="text-gray-300 hover:text-red-500 ml-2 text-lg font-bold leading-none">×</button>
+                    <div class="flex flex-col leading-tight">
+                        <span class="text-[11px] font-black text-gray-700">${f.name} (${f.gram}g)</span>
+                        <span class="text-[9px] text-gray-400">${f.size}</span>
+                    </div>
+                    <button onclick="event.stopPropagation(); removeFav('${f.id}')" class="text-gray-300 hover:text-red-500 ml-1 text-lg font-bold">×</button>
                 </div>
             `).join('');
         }

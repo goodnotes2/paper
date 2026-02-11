@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_final_v6'
+app.secret_key = 'paper_system_final_v7_size_fix'
 
 SITE_PASSWORD = "03877"
 cached_data = []
