@@ -9,6 +9,7 @@
     <style>
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.5rem; }
+        /* 별표 활성화 색상: 노란색 */
         .fav-star.active { color: #facc15 !important; }
         th.sortable { cursor: pointer; position: relative; }
         th.sortable::after { content: '↕'; position: absolute; right: 4px; opacity: 0.3; }
@@ -20,28 +21,29 @@
     <div class="max-w-md mx-auto mt-20 p-8 glass-card shadow-xl text-center">
         <h2 class="text-xl font-bold mb-6">보안 접속</h2>
         <form method="POST" class="space-y-4">
-            <input type="password" name="password" placeholder="비밀번호를 입력하세요" class="w-full px-4 py-3 border rounded-xl text-center focus:outline-blue-500">
+            <input type="password" name="password" placeholder="비밀번호를 입력하세요" class="w-full px-4 py-3 border rounded-xl text-center focus:outline-blue-500 shadow-sm">
             {% if error %}<p class="text-red-500 text-[11px]">{{ error }}</p>{% endif %}
-            <button type="submit" class="w-full py-3 bg-black text-white rounded-xl font-bold active:scale-95 transition-transform">접속하기</button>
+            <button type="submit" class="w-full py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all">접속하기</button>
         </form>
     </div>
     {% else %}
     <div class="max-w-6xl mx-auto space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="md:col-span-2 p-8 glass-card flex items-center justify-between">
-                <div class="text-3xl font-black tracking-tight text-gray-900">종이 검색 <span class="text-[10px] text-gray-400 font-normal ml-3">📅 {{ last_updated }}</span></div>
+            <div class="md:col-span-2 p-8 glass-card flex items-center justify-between shadow-sm">
+                <div class="text-3xl font-black tracking-tight text-gray-900">종이 검색 <span class="text-[10px] text-gray-400 font-normal ml-3 tracking-normal">📅 {{ last_updated }}</span></div>
             </div>
+            
             <div class="p-6 glass-card bg-blue-600 text-white shadow-lg flex flex-col justify-center">
                 <div class="flex justify-between items-center mb-2">
                     <span class="text-[11px] font-bold opacity-80 uppercase tracking-widest">Seneca Result</span>
                     <span id="seneca_result" class="text-3xl font-black">0.00 mm</span>
                 </div>
-                <input type="number" id="page_input" oninput="calc()" placeholder="페이지 수 입력" class="w-full p-2.5 rounded-xl border-none text-black text-sm mb-4 shadow-inner focus:ring-2 focus:ring-yellow-400 outline-none">
+                <input type="number" id="page_input" oninput="calc()" placeholder="페이지 수 입력" class="w-full p-2.5 rounded-xl border-none text-black text-sm mb-4 shadow-inner outline-none focus:ring-2 focus:ring-yellow-400">
                 
                 <div id="selected_info_box" class="pt-4 border-t border-white/20 space-y-2">
                     <div id="selected_info" class="text-[11px] font-bold truncate opacity-90 bg-white/10 p-2 rounded-lg text-center">선택된 종이가 없습니다</div>
                     <div class="flex justify-between items-center px-1">
-                        <div id="fav_size_display" class="text-sm font-extrabold text-blue-100">규격: -</div>
+                        <div id="fav_size_display" class="text-sm font-extrabold text-blue-100 italic">규격: -</div>
                         <div id="fav_price_display" class="text-2xl font-black text-yellow-300 drop-shadow-sm">0원</div>
                     </div>
                 </div>
@@ -49,7 +51,7 @@
             </div>
         </div>
 
-        <div id="favorites_bar" class="flex flex-wrap gap-2 empty:hidden"></div>
+        <div id="favorites_bar" class="flex flex-wrap gap-2 empty:hidden py-2"></div>
 
         <form method="POST" class="relative">
             <input type="text" name="keyword" id="keywordInput" value="{{ keyword }}" placeholder="종이 이름이나 제지사를 입력하세요..." class="w-full p-5 glass-card text-lg shadow-md pr-36 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
@@ -57,7 +59,7 @@
                 <button type="button" onclick="clearSearch()" id="clearBtn" class="p-2 text-gray-300 hover:text-gray-500 {{ 'hidden' if not keyword }}">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
-                <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-blue-700 active:scale-95 transition-all shadow-lg">검색</button>
+                <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-md active:scale-95">검색</button>
             </div>
         </form>
 
@@ -77,10 +79,12 @@
                 </thead>
                 <tbody class="divide-y text-sm">
                     {% for item in results %}
-                    <tr class="hover:bg-blue-50 cursor-pointer transition-colors" onclick="selectRow(this, '{{ item.두께 }}', '{{ item.품목 }}', '{{ item.평량 }}', '{{ item.고시가 }}', '{{ item.사이즈 }}', '{{ item.시트명 }}')">
+                    <tr class="hover:bg-blue-50 cursor-pointer transition-colors" 
+                        data-id="{{ item.품목 }}_{{ item.평량 }}_{{ item.시트명 }}"
+                        onclick="selectRow(this, '{{ item.두께 }}', '{{ item.품목 }}', '{{ item.평량 }}', '{{ item.고시가 }}', '{{ item.사이즈 }}', '{{ item.시트명 }}')">
                         <td class="p-4 text-center">
                             <button onclick="event.stopPropagation(); toggleFavorite('{{ item.품목 }}', '{{ item.두께 }}', '{{ item.평량 }}', '{{ item.고시가 }}', '{{ item.사이즈 }}', '{{ item.시트명 }}', this)" 
-                                    class="fav-star text-gray-300 text-2xl hover:scale-125 transition-transform">★</button>
+                                    class="fav-star text-gray-300 text-2xl hover:scale-110 transition-transform">★</button>
                         </td>
                         <td class="p-4">
                             <div class="font-bold text-gray-800">{{ item.품목 }}</div>
@@ -88,10 +92,10 @@
                         </td>
                         <td class="p-4 text-gray-500">{{ item.사이즈 }}</td>
                         <td class="p-4 text-center font-medium">{{ item.평량 }}g</td>
-                        <td class="p-4 text-center font-bold text-blue-500 tracking-tighter">{{ item.두께 }}μm</td>
+                        <td class="p-4 text-center font-bold text-blue-500">{{ item.두께 }}μm</td>
                         <td class="p-4 font-mono text-right font-bold text-gray-700 price-toggle" onclick="event.stopPropagation(); togglePrice(this, '{{ item.고시가 }}')">{{ item.고시가 }}</td>
                         <td class="p-4 text-center">
-                            <a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" class="text-[10px] bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-50 active:scale-95 inline-block font-bold">LINK 🔗</a>
+                            <a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" class="text-[10px] bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm font-bold hover:bg-gray-50 active:scale-95">LINK 🔗</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -113,8 +117,10 @@
 
         function toggleFavorite(name, thick, gram, price, size, sheet, btn) {
             let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            // 완전 고유 ID 생성 (누락 방지)
             const id = name + "_" + gram + "_" + sheet;
             const idx = favs.findIndex(f => f.id === id);
+
             if (idx > -1) {
                 favs.splice(idx, 1);
                 btn.classList.remove('active');
@@ -131,22 +137,21 @@
             if(!bar) return;
             const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             
-            document.querySelectorAll('.fav-star').forEach(starBtn => {
-                const tr = starBtn.closest('tr');
-                if(!tr) return;
-                const name = tr.cells[1].querySelector('div').innerText;
-                const gram = tr.cells[3].innerText.replace('g', '');
-                const sheet = tr.cells[6].querySelector('a').innerText.replace('LINK ', '').replace(' 🔗', '');
-                if(favs.some(f => f.id === name + "_" + gram + "_" + sheet)) starBtn.classList.add('active');
+            // 1. 테이블 내 모든 별표 상태 초기화 후 동기화
+            document.querySelectorAll('tr[data-id]').forEach(tr => {
+                const starBtn = tr.querySelector('.fav-star');
+                const rowId = tr.getAttribute('data-id');
+                if(favs.some(f => f.id === rowId)) starBtn.classList.add('active');
                 else starBtn.classList.remove('active');
             });
 
+            // 2. 상단 즐겨찾기 바 렌더링
             bar.innerHTML = favs.map(f => `
-                <div class="flex items-center gap-2 px-5 py-2.5 bg-white border border-yellow-200 rounded-2xl shadow-sm cursor-pointer hover:bg-yellow-50 active:scale-95 transition-all" 
+                <div class="flex items-center gap-2 px-5 py-2.5 bg-white border border-yellow-200 rounded-2xl shadow-sm cursor-pointer hover:bg-yellow-50 active:scale-95 transition-all group" 
                      onclick="quickSelect('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.size}')">
                     <span class="text-yellow-400 text-sm">★</span>
                     <span class="text-xs font-black text-gray-700">${f.name} (${f.gram}g)</span>
-                    <button onclick="event.stopPropagation(); removeFav('${f.id}')" class="text-gray-300 hover:text-red-500 ml-2 text-lg">×</button>
+                    <button onclick="event.stopPropagation(); removeFav('${f.id}')" class="text-gray-300 hover:text-red-500 ml-2 text-lg font-bold leading-none">×</button>
                 </div>
             `).join('');
         }
@@ -160,8 +165,8 @@
         }
 
         function selectRow(el, thick, name, gram, price, size, sheet) {
-            document.querySelectorAll('tr').forEach(r => r.classList.remove('bg-blue-100', 'ring-2', 'ring-blue-400', 'ring-inset'));
-            el.classList.add('bg-blue-100', 'ring-2', 'ring-blue-400', 'ring-inset');
+            document.querySelectorAll('tr').forEach(r => r.classList.remove('bg-blue-50', 'ring-2', 'ring-blue-400', 'ring-inset'));
+            el.classList.add('bg-blue-50', 'ring-2', 'ring-blue-400', 'ring-inset');
             quickSelect(thick, name, gram, price, size);
         }
 
@@ -190,9 +195,10 @@
         }
 
         function clearSearch() { 
-            document.getElementById('keywordInput').value = ''; 
+            const input = document.getElementById('keywordInput');
+            input.value = ''; 
             document.getElementById('clearBtn').classList.add('hidden'); 
-            document.getElementById('keywordInput').focus();
+            input.focus();
         }
     </script>
 </body>

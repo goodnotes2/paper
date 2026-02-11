@@ -1,10 +1,10 @@
 import pandas as pd
-from flask import Flask, render_template, request, session, redirect, url_for, flash
+from flask import Flask, render_template, request, session, redirect, url_for
 import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_secure_v5_fixed'
+app.secret_key = 'paper_system_final_v6'
 
 SITE_PASSWORD = "03877"
 cached_data = []
