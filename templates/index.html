@@ -30,7 +30,7 @@
             </div>
             <div class="p-6 glass-card bg-blue-600 text-white shadow-lg flex flex-col justify-center">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="text-[11px] font-bold opacity-80 tracking-widest uppercase">Seneca Result</span>
+                    <span class="text-[11px] font-bold opacity-80 uppercase tracking-widest">Seneca Result</span>
                     <span id="seneca_result" class="text-3xl font-black">0.00 mm</span>
                 </div>
                 <input type="number" id="page_input" oninput="calc()" placeholder="페이지 수 입력" class="w-full p-2.5 rounded-xl border-none text-black text-sm mb-4 outline-none focus:ring-2 focus:ring-yellow-400 shadow-inner">
@@ -57,7 +57,7 @@
             <table class="w-full text-left" id="resultTable">
                 <thead class="bg-gray-50 border-b text-[10px] text-gray-400 uppercase font-bold tracking-wider">
                     <tr>
-                        <th class="p-4 w-12 text-center text-lg">⭐</th>
+                        <th class="p-4 w-12 text-center">⭐</th>
                         <th class="p-4">품목 / 제지사</th>
                         <th class="p-4">색상 / 패턴</th>
                         <th class="p-4">사이즈</th>
@@ -108,7 +108,6 @@
 
         function toggleFavorite(name, thick, gram, price, size, sheet, color, btn) {
             let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
-            // 매칭을 위해 모든 공백 제거한 ID 생성
             const id = `${name}_${gram}_${sheet}_${size}_${color}`.replace(/\s+/g, '');
             const idx = favs.findIndex(f => f.id === id);
 

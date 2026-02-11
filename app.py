@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_v12_final_fix'
+app.secret_key = 'paper_system_v13_final'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -23,6 +23,7 @@ def load_data():
             df.columns = [str(col).strip() for col in df.columns]
             df = df.ffill()
             
+            # 컬럼 매핑 안전장치
             col_map = {
                 '품목': next((c for c in df.columns if '품목' in c), '품목'),
                 '색상': next((c for c in df.columns if '색상' in c or '패턴' in c), '색상'),
@@ -33,27 +34,26 @@ def load_data():
             }
             
             temp_df = pd.DataFrame()
-            temp_df['품목'] = df[col_map['품목']].astype(str).str.strip()
-            # 색상/패턴 데이터 정제 (공백 및 nan 처리)
-            if col_map['색상'] in df.columns:
-                temp_df['색상'] = df[col_map['색상']].astype(str).str.strip().replace(['nan', 'None', ''], '-')
+            # 필수 컬럼이 없을 경우를 대비한 처리
+            temp_df['품목'] = df[col_map['품목']].astype(str).str.strip() if col_map['품목'] in df.columns else "이름없음"
+            temp_df['색상'] = df[col_map['색상']].astype(str).str.strip().replace(['nan', 'None', ''], '-') if col_map['색상'] in df.columns else "-"
+            temp_df['사이즈'] = df[col_map['사이즈']].astype(str).str.strip() if col_map['사이즈'] in df.columns else "-"
+            temp_df['평량'] = df[col_map['평량']].astype(str).str.strip().str.replace(r'\.0$', '', regex=True) if col_map['평량'] in df.columns else "0"
+            temp_df['두께'] = df[col_map['두께']].astype(str).str.strip().replace(['nan', 'None', ''], '0') if col_map['두께'] in df.columns else "0"
+            
+            if col_map['고시가'] in df.columns:
+                temp_df['고시가_원본'] = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
+                temp_df['고시가'] = temp_df['고시가_원본'].apply(lambda x: f"{int(x):,}" if x > 0 else "0")
             else:
-                temp_df['색상'] = "-"
-            
-            temp_df['사이즈'] = df[col_map['사이즈']].astype(str).str.strip()
-            # 평량 소수점 제거 및 공백 제거 (100.0 -> 100)
-            temp_df['평량'] = df[col_map['평량']].astype(str).str.strip().str.replace(r'\.0$', '', regex=True)
-            # 두께 데이터 정제 (데이터 없을 시 0으로 통일)
-            temp_df['두께'] = df[col_map['두께']].astype(str).str.strip().replace(['nan', 'None', ''], '0')
-            
-            temp_df['고시가_원본'] = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
-            temp_df['고시가'] = temp_df['고시가_원본'].apply(lambda x: f"{int(x):,}" if x > 0 else "0")
-            temp_df['시트명'] = sheet_name.strip()
+                temp_df['고시가'] = "0"
+                
+            temp_df['시트명'] = str(sheet_name).strip()
             combined_list.append(temp_df)
             
         if combined_list:
             cached_data = pd.concat(combined_list, ignore_index=True).to_dict('records')
-    except Exception as e: print(f"Error: {e}")
+    except Exception as e:
+        print(f"Data Load Error: {e}")
 
 load_data()
 
@@ -63,18 +63,28 @@ def index():
         if request.form.get('password') == SITE_PASSWORD:
             session['authenticated'] = True
             return redirect(url_for('index'))
+            
     if not session.get('authenticated'):
         return render_template('index.html', authenticated=False)
 
     keyword = request.form.get('keyword', '').strip() if request.method == 'POST' else ""
-    # 검색 시 품목명뿐만 아니라 색상으로도 검색 가능하게 수정
-    results = [item for item in cached_data if keyword.lower() in item['품목'].lower() or keyword.lower() in item['색상'].lower()] if keyword else []
+    results = []
     
-    for item in results:
-        p, s = item['품목'], item['시트명']
-        if '두성' in s: item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
-        elif '삼원' in s: item['url'] = f"https://www.samwonpaper.com/product/paper/list?search.searchString={p}"
-        else: item['url'] = f"https://www.google.com/search?q={s}+{p}"
+    if keyword:
+        # 검색 시 오류 방지를 위해 리스트 컴프리헨션 사용
+        results = [
+            item for item in cached_data 
+            if keyword.lower() in item['품목'].lower() or keyword.lower() in item['색상'].lower()
+        ]
+        
+        for item in results:
+            p, s = item['품목'], item['시트명']
+            if '두성' in s:
+                item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
+            elif '삼원' in s:
+                item['url'] = f"https://www.samwonpaper.com/product/paper/list?search.searchString={p}"
+            else:
+                item['url'] = f"https://www.google.com/search?q={s}+{p}"
     
     return render_template('index.html', results=results, keyword=keyword, authenticated=True, last_updated=last_updated)
 
