@@ -1,10 +1,11 @@
 import pandas as pd
+# [중요] 반드시 소문자 flask여야 합니다.
 from flask import Flask, render_template, request, session, redirect, url_for
 import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_v13_final'
+app.secret_key = 'paper_system_final_v16'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -13,17 +14,21 @@ last_updated = ""
 def load_data():
     global cached_data, last_updated
     file_path = 'search.xlsx'
-    if not os.path.exists(file_path): return
-    mtime = os.path.getmtime(file_path)
-    last_updated = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M')
+    if not os.path.exists(file_path): 
+        print("Excel file not found!")
+        return
+        
     try:
+        mtime = os.path.getmtime(file_path)
+        last_updated = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M')
+        
         all_sheets = pd.read_excel(file_path, sheet_name=None, engine='openpyxl')
         combined_list = []
         for sheet_name, df in all_sheets.items():
             df.columns = [str(col).strip() for col in df.columns]
             df = df.ffill()
             
-            # 컬럼 매핑 안전장치
+            # 컬럼 매핑 (데이터 유무와 상관없이 에러 방지)
             col_map = {
                 '품목': next((c for c in df.columns if '품목' in c), '품목'),
                 '색상': next((c for c in df.columns if '색상' in c or '패턴' in c), '색상'),
@@ -34,8 +39,7 @@ def load_data():
             }
             
             temp_df = pd.DataFrame()
-            # 필수 컬럼이 없을 경우를 대비한 처리
-            temp_df['품목'] = df[col_map['품목']].astype(str).str.strip() if col_map['품목'] in df.columns else "이름없음"
+            temp_df['품목'] = df[col_map['품목']].astype(str).str.strip() if col_map['품목'] in df.columns else "Unknown"
             temp_df['색상'] = df[col_map['색상']].astype(str).str.strip().replace(['nan', 'None', ''], '-') if col_map['색상'] in df.columns else "-"
             temp_df['사이즈'] = df[col_map['사이즈']].astype(str).str.strip() if col_map['사이즈'] in df.columns else "-"
             temp_df['평량'] = df[col_map['평량']].astype(str).str.strip().str.replace(r'\.0$', '', regex=True) if col_map['평량'] in df.columns else "0"
@@ -53,7 +57,7 @@ def load_data():
         if combined_list:
             cached_data = pd.concat(combined_list, ignore_index=True).to_dict('records')
     except Exception as e:
-        print(f"Data Load Error: {e}")
+        print(f"Excel Loading Error: {e}")
 
 load_data()
 
@@ -71,7 +75,7 @@ def index():
     results = []
     
     if keyword:
-        # 검색 시 오류 방지를 위해 리스트 컴프리헨션 사용
+        # 검색 시 오류 방지를 위해 하단 로직으로 교체
         results = [
             item for item in cached_data 
             if keyword.lower() in item['품목'].lower() or keyword.lower() in item['색상'].lower()
