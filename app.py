@@ -1,32 +1,36 @@
 import pandas as pd
+# [중요] 반드시 소문자 flask여야 합니다.
 from flask import Flask, render_template, request, session, redirect, url_for
 import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_final_v18'
+app.secret_key = 'paper_system_final_v16'
 
 SITE_PASSWORD = "03877"
+EXCEL_FILE = 'search.xlsx'
 cached_data = []
 last_updated = ""
 
 def load_data():
     global cached_data, last_updated
-    file_path = 'search.xlsx'
-    if not os.path.exists(file_path): 
+    if not os.path.exists(EXCEL_FILE): 
         print("Excel file not found!")
         return
         
     try:
-        mtime = os.path.getmtime(file_path)
+        mtime = os.path.getmtime(EXCEL_FILE)
         last_updated = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M')
         
-        all_sheets = pd.read_excel(file_path, sheet_name=None, engine='openpyxl')
+        all_sheets = pd.read_excel(EXCEL_FILE, sheet_name=None, engine='openpyxl')
         combined_list = []
+        
         for sheet_name, df in all_sheets.items():
+            # 1. 컬럼 정리 및 앞 채우기(ffill)를 가장 먼저 수행
             df.columns = [str(col).strip() for col in df.columns]
-            df = df.ffill()
+            df = df.ffill() # 비어있는 셀을 위 데이터로 채움
             
+            # 2. 컬럼 매핑
             col_map = {
                 '품목': next((c for c in df.columns if '품목' in c), '품목'),
                 '색상': next((c for c in df.columns if '색상' in c or '패턴' in c), '색상'),
@@ -37,16 +41,29 @@ def load_data():
             }
             
             temp_df = pd.DataFrame()
-            # 모든 데이터를 문자열로 변환하여 에러 방지
-            temp_df['품목'] = df[col_map['품목']].astype(str).str.strip().replace(['nan', 'None'], 'Unknown') if col_map['품목'] in df.columns else "Unknown"
-            temp_df['색상'] = df[col_map['색상']].astype(str).str.strip().replace(['nan', 'None', ''], '-') if col_map['색상'] in df.columns else "-"
-            temp_df['사이즈'] = df[col_map['사이즈']].astype(str).str.strip() if col_map['사이즈'] in df.columns else "-"
-            temp_df['평량'] = df[col_map['평량']].astype(str).str.strip().str.replace(r'\.0$', '', regex=True) if col_map['평량'] in df.columns else "0"
-            temp_df['두께'] = df[col_map['두께']].astype(str).str.strip().replace(['nan', 'None', ''], '0') if col_map['두께'] in df.columns else "0"
             
+            # 3. 데이터 추출 시 NaN 처리 및 문자열 강제 변환
+            # 'nan' 문자열이 생성되는 것을 방지하기 위해 .fillna('') 사용
+            temp_df['품목'] = df[col_map['품목']].fillna('Unknown').astype(str).str.strip() if col_map['품목'] in df.columns else "Unknown"
+            temp_df['색상'] = df[col_map['색상']].fillna('-').astype(str).str.strip() if col_map['색상'] in df.columns else "-"
+            temp_df['사이즈'] = df[col_map['사이즈']].fillna('-').astype(str).str.strip() if col_map['사이즈'] in df.columns else "-"
+            
+            # 평량 숫자 처리 (소수점 제거 및 빈값 0 처리)
+            if col_map['평량'] in df.columns:
+                temp_df['평량'] = pd.to_numeric(df[col_map['평량']], errors='coerce').fillna(0).astype(int).astype(str)
+            else:
+                temp_df['평량'] = "0"
+                
+            # 두께 숫자 처리 (nan 방지)
+            if col_map['두께'] in df.columns:
+                temp_df['두께'] = pd.to_numeric(df[col_map['두께']], errors='coerce').fillna(0).astype(int).astype(str)
+            else:
+                temp_df['두께'] = "0"
+            
+            # 고시가 처리
             if col_map['고시가'] in df.columns:
-                temp_df['고시가_원본'] = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
-                temp_df['고시가'] = temp_df['고시가_원본'].apply(lambda x: f"{int(x):,}" if x > 0 else "0")
+                prices = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
+                temp_df['고시가'] = prices.apply(lambda x: f"{int(x):,}" if x > 0 else "0")
             else:
                 temp_df['고시가'] = "0"
                 
@@ -55,6 +72,7 @@ def load_data():
             
         if combined_list:
             cached_data = pd.concat(combined_list, ignore_index=True).to_dict('records')
+            
     except Exception as e:
         print(f"Excel Loading Error: {e}")
 
@@ -74,15 +92,16 @@ def index():
     results = []
     
     if keyword:
-        # [수정 핵심] item['품목'] 등을 str()으로 감싸서 숫자가 들어와도 .lower()가 작동하게 함
+        low_keyword = keyword.lower()
+        # 검색 시 모든 데이터를 str로 변환하여 lower() 비교 (500 에러 방지)
         results = [
             item for item in cached_data 
-            if keyword.lower() in str(item.get('품목', '')).lower() or 
-               keyword.lower() in str(item.get('색상', '')).lower()
+            if low_keyword in str(item.get('품목', '')).lower() or 
+               low_keyword in str(item.get('색상', '')).lower()
         ]
         
         for item in results:
-            p, s = str(item.get('품목', '')), str(item.get('시트명', ''))
+            p, s = item['품목'], item['시트명']
             if '두성' in s:
                 item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
             elif '삼원' in s:
