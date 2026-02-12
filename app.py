@@ -1,11 +1,10 @@
 import pandas as pd
-# [중요] 반드시 소문자 flask여야 합니다.
 from flask import Flask, render_template, request, session, redirect, url_for
 import os
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_final_v16'
+app.secret_key = 'paper_system_final_v18'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -28,7 +27,6 @@ def load_data():
             df.columns = [str(col).strip() for col in df.columns]
             df = df.ffill()
             
-            # 컬럼 매핑 (데이터 유무와 상관없이 에러 방지)
             col_map = {
                 '품목': next((c for c in df.columns if '품목' in c), '품목'),
                 '색상': next((c for c in df.columns if '색상' in c or '패턴' in c), '색상'),
@@ -39,7 +37,8 @@ def load_data():
             }
             
             temp_df = pd.DataFrame()
-            temp_df['품목'] = df[col_map['품목']].astype(str).str.strip() if col_map['품목'] in df.columns else "Unknown"
+            # 모든 데이터를 문자열로 변환하여 에러 방지
+            temp_df['품목'] = df[col_map['품목']].astype(str).str.strip().replace(['nan', 'None'], 'Unknown') if col_map['품목'] in df.columns else "Unknown"
             temp_df['색상'] = df[col_map['색상']].astype(str).str.strip().replace(['nan', 'None', ''], '-') if col_map['색상'] in df.columns else "-"
             temp_df['사이즈'] = df[col_map['사이즈']].astype(str).str.strip() if col_map['사이즈'] in df.columns else "-"
             temp_df['평량'] = df[col_map['평량']].astype(str).str.strip().str.replace(r'\.0$', '', regex=True) if col_map['평량'] in df.columns else "0"
@@ -75,14 +74,15 @@ def index():
     results = []
     
     if keyword:
-        # 검색 시 오류 방지를 위해 하단 로직으로 교체
+        # [수정 핵심] item['품목'] 등을 str()으로 감싸서 숫자가 들어와도 .lower()가 작동하게 함
         results = [
             item for item in cached_data 
-            if keyword.lower() in item['품목'].lower() or keyword.lower() in item['색상'].lower()
+            if keyword.lower() in str(item.get('품목', '')).lower() or 
+               keyword.lower() in str(item.get('색상', '')).lower()
         ]
         
         for item in results:
-            p, s = item['품목'], item['시트명']
+            p, s = str(item.get('품목', '')), str(item.get('시트명', ''))
             if '두성' in s:
                 item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
             elif '삼원' in s:
