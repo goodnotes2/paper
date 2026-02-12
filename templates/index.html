@@ -5,93 +5,151 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>종이 검색 시스템</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    
     <style>
-        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+        /* 기본 서체를 가독성 중심의 IBM Plex Sans KR로 설정 */
+        body { 
+            font-family: 'IBM Plex Sans KR', 'Pretendard', sans-serif; 
+            background-color: #f8fafc; 
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.02em; /* 한국어 가독성에 최적화된 좁은 자간 */
+        }
+        
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.5rem; }
         .fav-star.active { color: #facc15 !important; }
-        .price-toggle { cursor: pointer; text-decoration: underline dotted; }
+        
+        /* 테이블 텍스트 가독성 강화 */
+        #resultTable td {
+            line-height: 1.6; /* 행간을 넓혀 눈의 피로도 감소 */
+            padding-top: 1.25rem;
+            padding-bottom: 1.25rem;
+        }
+
+        .price-toggle { cursor: pointer; text-decoration: underline dotted; color: #1e293b; }
+        
+        /* 숫자 가독성을 위한 고정폭 폰트 느낌 추가 */
+        .font-mono-custom {
+            font-family: 'ui-monospace', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+            letter-spacing: 0;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="p-4 md:p-8">
+
     {% if not authenticated %}
     <div class="max-w-md mx-auto mt-20 p-8 glass-card shadow-xl text-center">
-        <h2 class="text-xl font-bold mb-6">보안 접속</h2>
+        <h2 class="text-xl font-bold mb-6 text-gray-800">보안 접속</h2>
         <form method="POST" class="space-y-4">
-            <input type="password" name="password" placeholder="비밀번호를 입력하세요" class="w-full px-4 py-3 border rounded-xl text-center focus:outline-blue-500 shadow-sm">
-            <button type="submit" class="w-full py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all">접속하기</button>
+            <input type="password" name="password" placeholder="비밀번호를 입력하세요" 
+                   class="w-full px-4 py-3 border rounded-xl text-center focus:outline-blue-500 shadow-sm" autofocus>
+            {% if error %}
+            <p class="text-red-500 text-sm font-semibold">{{ error }}</p>
+            {% endif %}
+            <button type="submit" class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all">접속하기</button>
         </form>
     </div>
     {% else %}
+
     <div class="max-w-6xl mx-auto space-y-6">
+        
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="md:col-span-2 p-8 glass-card flex items-center justify-between shadow-sm">
-                <div class="text-3xl font-black tracking-tight text-gray-900">종이 검색 <span class="text-[10px] text-gray-400 font-normal ml-3">📅 {{ last_updated }}</span></div>
-            </div>
-            <div class="p-6 glass-card bg-blue-600 text-white shadow-lg flex flex-col justify-center">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-[11px] font-bold opacity-80 uppercase tracking-widest">Seneca Result</span>
-                    <span id="seneca_result" class="text-3xl font-black">0.00 mm</span>
+                <div>
+                    <div class="text-3xl font-bold tracking-tight text-slate-900">종이 검색 시스템</div>
+                    <div class="text-[11px] text-gray-400 mt-2 font-medium">📅 마지막 데이터 업데이트: {{ last_updated }}</div>
                 </div>
-                <input type="number" id="page_input" oninput="calc()" placeholder="페이지 수 입력" class="w-full p-2.5 rounded-xl border-none text-black text-sm mb-4 outline-none focus:ring-2 focus:ring-yellow-400 shadow-inner">
-                <div id="selected_info_box" class="pt-4 border-t border-white/20 space-y-2">
-                    <div id="selected_info" class="text-[11px] font-bold truncate opacity-90 bg-white/10 p-2 rounded-lg text-center">선택된 종이가 없습니다</div>
-                    <div class="flex justify-between items-center px-1">
-                        <div id="fav_size_display" class="text-sm font-extrabold text-blue-100 italic">규격: -</div>
-                        <div id="fav_price_display" class="text-2xl font-black text-yellow-300 drop-shadow-sm">0원</div>
+                <button onclick="location.href='/'" class="text-gray-300 hover:text-blue-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 glass-card bg-slate-900 text-white shadow-lg flex flex-col justify-center">
+                <div class="flex justify-between items-end mb-4">
+                    <span class="text-[10px] font-bold opacity-60 uppercase tracking-widest">Seneca Result</span>
+                    <div class="text-right">
+                        <span id="seneca_result" class="text-4xl font-light font-mono-custom">0.00</span>
+                        <span class="text-sm ml-1 opacity-70">mm</span>
+                    </div>
+                </div>
+                <input type="number" id="page_input" oninput="calc()" placeholder="총 페이지 수 입력" 
+                       class="w-full p-3 rounded-xl border-none text-black text-sm mb-4 outline-none focus:ring-2 focus:ring-blue-400 shadow-inner font-bold">
+                
+                <div id="selected_info_box" class="pt-4 border-t border-white/10 space-y-2">
+                    <div id="selected_info" class="text-[11px] font-medium truncate opacity-70">선택된 종이 없음</div>
+                    <div class="flex justify-between items-center">
+                        <div id="fav_size_display" class="text-xs opacity-50">규격: -</div>
+                        <div id="fav_price_display" class="text-xl font-bold text-blue-400">0원</div>
                     </div>
                 </div>
                 <input type="hidden" id="hidden_thick" value="0">
             </div>
         </div>
 
-        <div id="favorites_bar" class="flex flex-wrap gap-2 empty:hidden py-2"></div>
+        <div id="favorites_bar" class="flex flex-wrap gap-2 empty:hidden"></div>
 
         <form method="POST" class="relative">
-            <input type="text" name="keyword" value="{{ keyword }}" placeholder="종이명, 제지사, 색상으로 검색..." class="w-full p-5 glass-card text-lg shadow-md focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-36">
+            <input type="text" name="keyword" value="{{ keyword }}" placeholder="종이명, 색상, 제지사 검색..." 
+                   class="w-full p-5 glass-card text-lg shadow-md focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-36 font-medium">
             <button type="submit" class="absolute right-4 top-1/2 -translate-y-1/2 bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-md active:scale-95">검색</button>
         </form>
 
         {% if results %}
-        <div class="glass-card overflow-hidden shadow-sm border border-gray-100">
-            <table class="w-full text-left" id="resultTable">
-                <thead class="bg-gray-50 border-b text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+        <div class="glass-card overflow-hidden shadow-sm border border-gray-100 overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse" id="resultTable">
+                <thead class="bg-slate-50 border-b text-[11px] text-slate-500 uppercase font-bold tracking-wider">
                     <tr>
                         <th class="p-4 w-12 text-center">⭐</th>
                         <th class="p-4">품목 / 제지사</th>
-                        <th class="p-4">색상 / 패턴</th>
+                        <th class="p-4">색상</th>
                         <th class="p-4">사이즈</th>
                         <th class="p-4 text-center">평량</th>
                         <th class="p-4 text-center">두께</th>
                         <th class="p-4 text-right">고시가(R)</th>
-                        <th class="p-4 text-center">상세</th>
+                        <th class="p-4 text-center">링크</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y text-sm">
+                <tbody class="divide-y divide-gray-50 text-[14px]">
                     {% for item in results %}
-                    <tr class="hover:bg-blue-50 cursor-pointer transition-colors" 
+                    <tr class="hover:bg-blue-50/50 cursor-pointer transition-colors" 
                         data-id="{{ item.품목 }}_{{ item.평량 }}_{{ item.시트명 }}_{{ item.사이즈 }}_{{ item.색상 }}"
                         onclick="selectRow(this, '{{ item.두께 }}', '{{ item.품목 }}', '{{ item.평량 }}', '{{ item.고시가 }}', '{{ item.사이즈 }}', '{{ item.색상 }}')">
                         <td class="p-4 text-center">
                             <button onclick="event.stopPropagation(); toggleFavorite('{{ item.품목 }}', '{{ item.두께 }}', '{{ item.평량 }}', '{{ item.고시가 }}', '{{ item.사이즈 }}', '{{ item.시트명 }}', '{{ item.색상 }}', this)" 
-                                    class="fav-star text-gray-300 text-2xl hover:scale-110 transition-transform">★</button>
+                                    class="fav-star text-gray-200 text-2xl hover:scale-110 transition-transform">★</button>
                         </td>
                         <td class="p-4">
-                            <div class="font-bold text-gray-800">{{ item.품목 }}</div>
-                            <div class="text-[10px] text-gray-400">{{ item.시트명 }}</div>
+                            <div class="font-bold text-slate-900 leading-tight">{{ item.품목 }}</div>
+                            <div class="text-[11px] text-slate-400 mt-1">{{ item.시트명 }}</div>
                         </td>
-                        <td class="p-4 text-gray-600 font-medium">{{ item.색상 }}</td>
-                        <td class="p-4 text-gray-500">{{ item.사이즈 }}</td>
-                        <td class="p-4 text-center">{{ item.평량 }}g</td>
-                        <td class="p-4 text-center font-bold text-blue-500">{{ item.두께 if item.두께 != '0' else '-' }}μm</td>
-                        <td class="p-4 font-mono text-right font-bold text-gray-700 price-toggle" onclick="event.stopPropagation(); togglePrice(this, '{{ item.고시가 }}')">{{ item.고시가 }}</td>
+                        <td class="p-4 text-slate-600 font-medium">{{ item.색상 }}</td>
+                        <td class="p-4 text-slate-500 font-mono-custom text-xs">{{ item.사이즈 }}</td>
+                        <td class="p-4 text-center text-slate-700 font-bold">{{ item.평량 }}<span class="text-[10px] ml-0.5 font-normal opacity-50">g</span></td>
+                        <td class="p-4 text-center font-bold text-blue-600 font-mono-custom">{{ item.두께 if item.두께 != '0' else '-' }}<span class="text-[10px] ml-0.5 font-normal opacity-50">μm</span></td>
+                        <td class="p-4 font-bold text-right text-slate-900 price-toggle font-mono-custom" 
+                            onclick="event.stopPropagation(); togglePrice(this, '{{ item.고시가 }}')">{{ item.고시가 }}</td>
                         <td class="p-4 text-center">
-                            <a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" class="text-[10px] bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm font-bold">LINK 🔗</a>
+                            <a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" 
+                               class="inline-block p-2 hover:bg-white rounded-full transition-colors shadow-sm border border-gray-100">
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                               </svg>
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+        {% elif keyword %}
+        <div class="text-center py-20 glass-card">
+            <p class="text-gray-400 font-medium">검색 결과가 없습니다.</p>
         </div>
         {% endif %}
     </div>
@@ -110,12 +168,8 @@
             let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             const id = `${name}_${gram}_${sheet}_${size}_${color}`.replace(/\s+/g, '');
             const idx = favs.findIndex(f => f.id === id);
-
-            if (idx > -1) {
-                favs.splice(idx, 1);
-            } else {
-                favs.push({ id, name, thick, gram, price, size, sheet, color });
-            }
+            if (idx > -1) { favs.splice(idx, 1); } 
+            else { favs.push({ id, name, thick, gram, price, size, sheet, color }); }
             localStorage.setItem('paper_favs', JSON.stringify(favs));
             renderFavorites();
         }
@@ -133,14 +187,11 @@
             });
 
             bar.innerHTML = favs.map(f => `
-                <div class="flex items-center gap-2 px-4 py-2 bg-white border border-yellow-200 rounded-2xl shadow-sm cursor-pointer hover:bg-yellow-50 active:scale-95 transition-all" 
+                <div class="flex items-center gap-3 px-4 py-2 bg-white border border-slate-200 rounded-full shadow-sm cursor-pointer hover:border-blue-300 transition-all" 
                      onclick="quickSelect('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.size}', '${f.color}')">
-                    <span class="text-yellow-400 text-sm">★</span>
-                    <div class="flex flex-col leading-tight">
-                        <span class="text-[11px] font-black text-gray-700">${f.name} ${f.color !== '-' ? '['+f.color+']' : ''} (${f.gram}g)</span>
-                        <span class="text-[9px] text-gray-400">${f.size}</span>
-                    </div>
-                    <button onclick="event.stopPropagation(); removeFav('${f.id}')" class="text-gray-300 hover:text-red-500 ml-1 text-lg font-bold">×</button>
+                    <span class="text-yellow-400 text-xs">★</span>
+                    <span class="text-[12px] font-bold text-slate-700">${f.name} <span class="text-slate-400 font-normal">${f.gram}g</span></span>
+                    <button onclick="event.stopPropagation(); removeFav('${f.id}')" class="text-slate-300 hover:text-red-500 font-bold text-lg">×</button>
                 </div>
             `).join('');
         }
@@ -155,8 +206,8 @@
         }
 
         function selectRow(el, thick, name, gram, price, size, color) {
-            document.querySelectorAll('tr').forEach(r => r.classList.remove('bg-blue-50', 'ring-2', 'ring-blue-400', 'ring-inset'));
-            el.classList.add('bg-blue-50', 'ring-2', 'ring-blue-400', 'ring-inset');
+            document.querySelectorAll('tr').forEach(r => r.classList.remove('bg-blue-50/80', 'ring-1', 'ring-blue-200'));
+            el.classList.add('bg-blue-50/80', 'ring-1', 'ring-blue-200');
             quickSelect(thick, name, gram, price, size, color);
         }
 
@@ -170,7 +221,8 @@
         function calc() {
             const p = parseFloat(document.getElementById('page_input').value) || 0;
             const t = parseFloat(document.getElementById('hidden_thick').value) || 0;
-            document.getElementById('seneca_result').innerText = (p > 0 && t > 0) ? ((p / 2) * t / 1000).toFixed(2) + " mm" : "0.00 mm";
+            const result = (p > 0 && t > 0) ? ((p / 2) * t / 1000).toFixed(2) : "0.00";
+            document.getElementById('seneca_result').innerText = result;
         }
     </script>
 </body>
