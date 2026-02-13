@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'IBM Plex Sans KR', sans-serif; background-color: #f8fafc; letter-spacing: -0.02em; -webkit-font-smoothing: antialiased; }
+        body { font-family: 'IBM Plex Sans KR', sans-serif; background-color: #f8fafc; letter-spacing: -0.02em; }
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1.5rem; }
         .fav-star.active { color: #facc15 !important; }
         #favorites_bar::-webkit-scrollbar { display: none; }
@@ -34,7 +34,7 @@
                     <div class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">종이 검색 시스템</div>
                     <div class="text-[11px] text-gray-400 mt-2 font-medium">📅 업데이트: {{ last_updated }}</div>
                 </div>
-                <button onclick="location.href='/'" class="text-gray-300 hover:text-blue-500">
+                <button onclick="location.reload()" class="text-gray-300 hover:text-blue-500">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                 </button>
             </div>
@@ -69,7 +69,7 @@
         {% if results %}
         <div class="glass-card overflow-hidden shadow-sm border border-gray-100">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse" id="resultTable">
+                <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-50 border-b text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                         <tr>
                             <th class="p-3 w-10 text-center">⭐</th>
@@ -85,15 +85,9 @@
                     <tbody class="divide-y divide-gray-50 text-[13px] md:text-[14px]">
                         {% for item in results %}
                         <tr class="hover:bg-blue-50/50 cursor-pointer transition-colors" 
-                            data-id="{{ item.row_id }}"
-                            data-name="{{ item.품목 }}"
-                            data-thick="{{ item.두께 }}"
-                            data-gram="{{ item.평량 }}"
-                            data-price="{{ item.고시가 }}"
-                            data-size="{{ item.사이즈 }}"
-                            data-color="{{ item.색상 }}"
-                            data-sheet="{{ item.시트명 }}"
-                            onclick="selectRow(this)">
+                            data-id="{{ item.row_id }}" data-name="{{ item.품목 }}" data-thick="{{ item.두께 }}"
+                            data-gram="{{ item.평량 }}" data-price="{{ item.고시가 }}" data-size="{{ item.사이즈 }}"
+                            data-color="{{ item.색상 }}" data-sheet="{{ item.시트명 }}" onclick="selectRow(this)">
                             <td class="p-3 text-center">
                                 <button onclick="handleFavorite(event, this)" class="fav-star text-gray-200 text-2xl">★</button>
                             </td>
@@ -124,11 +118,9 @@
     <script>
         window.onload = () => { renderFavorites(); };
 
-        // [변경] 모든 데이터를 개별 인자가 아닌 Element에서 직접 가져오도록 수정
         function selectRow(el) {
             document.querySelectorAll('tr').forEach(r => r.classList.remove('bg-blue-50/80', 'ring-1', 'ring-blue-200'));
             el.classList.add('bg-blue-50/80', 'ring-1', 'ring-blue-200');
-            
             const d = el.dataset;
             quickDisplay(d.thick, d.name, d.gram, d.price, d.size, d.color);
         }
@@ -137,16 +129,10 @@
             e.stopPropagation();
             const tr = btn.closest('tr');
             const d = tr.dataset;
-            
             let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             const idx = favs.findIndex(f => f.id === d.id);
-            
-            if (idx > -1) { 
-                favs.splice(idx, 1); 
-            } else { 
-                favs.push({ id: d.id, name: d.name, thick: d.thick, gram: d.gram, price: d.price, size: d.size, sheet: d.sheet, color: d.color }); 
-            }
-            
+            if (idx > -1) { favs.splice(idx, 1); } 
+            else { favs.push({ id: d.id, name: d.name, thick: d.thick, gram: d.gram, price: d.price, size: d.size, color: d.color }); }
             localStorage.setItem('paper_favs', JSON.stringify(favs));
             renderFavorites();
         }
@@ -155,13 +141,11 @@
             const bar = document.getElementById('favorites_bar');
             if(!bar) return;
             const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
-            
-            // 별표 상태 동기화
             document.querySelectorAll('tr[data-id]').forEach(tr => {
-                const starBtn = tr.querySelector('.fav-star');
                 const rowId = tr.dataset.id;
-                if(favs.some(f => f.id === rowId)) starBtn.classList.add('active');
-                else starBtn.classList.remove('active');
+                const star = tr.querySelector('.fav-star');
+                if(favs.some(f => f.id === rowId)) star.classList.add('active');
+                else star.classList.remove('active');
             });
 
             bar.innerHTML = favs.map(f => `

@@ -5,7 +5,7 @@ from datetime import datetime
 import re
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_final_v27'
+app.secret_key = 'paper_system_final_v28_final'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -27,7 +27,6 @@ def load_data():
             df.columns = [str(col).strip() for col in df.columns]
             df = df.ffill()
             
-            # 컬럼 매핑
             col_map = {
                 '품목': next((c for c in df.columns if '품목' in c), '품목'),
                 '색상': next((c for c in df.columns if '색상' in c or '패턴' in c), '색상'),
@@ -37,17 +36,14 @@ def load_data():
                 '두께': next((c for c in df.columns if '두께' in c), '두께')
             }
             
-            # 데이터 정제 (모든 필드 강제 문자열화)
             temp_df = pd.DataFrame()
             temp_df['품목'] = df[col_map['품목']].fillna('').astype(str).str.strip()
             temp_df['색상'] = df[col_map['색상']].fillna('-').astype(str).str.strip().replace(['nan', 'None', ''], '-')
             temp_df['사이즈'] = df[col_map['사이즈']].fillna('-').astype(str).str.strip()
             temp_df['평량'] = df[col_map['평량']].fillna('0').astype(str).str.strip().str.replace(r'\.0$', '', regex=True)
             
-            # 두께 처리
             temp_df['두께'] = pd.to_numeric(df[col_map['두께']], errors='coerce').fillna(0).astype(str)
             
-            # 가격 처리
             if col_map['고시가'] in df.columns:
                 nums = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
                 temp_df['고시가'] = nums.apply(lambda x: f"{int(x):,}" if x > 0 else "0")
@@ -56,22 +52,20 @@ def load_data():
                 
             temp_df['시트명'] = str(sheet_name).strip()
             
-            # [수정] 자바스크립트가 100% 인식 가능한 깨끗한 ID 생성
-            def create_clean_id(row):
-                # 품목, 평량, 색상에서 한글/영문/숫자만 추출
-                raw_text = f"{row['품목']}{row['평량']}{row['색상']}{row['시트명']}"
+            # [수정] 사이즈까지 포함하여 고유 ID 생성 (중복 방지 핵심)
+            def create_unique_id(row):
+                raw_text = f"{row['품목']}{row['평량']}{row['색상']}{row['시트명']}{row['사이즈']}"
                 clean_text = re.sub(r'[^a-zA-Z0-9가-힣]', '', raw_text)
-                return f"paper_{clean_text}" # 숫자로 시작하지 않게 접두어 추가
+                return f"id_{clean_text}"
 
-            temp_df['row_id'] = temp_df.apply(create_clean_id, axis=1)
+            temp_df['row_id'] = temp_df.apply(create_unique_id, axis=1)
             combined_list.append(temp_df)
             
         if combined_list:
-            # 딕셔너리로 변환하여 캐시 저장
             cached_data = pd.concat(combined_list, ignore_index=True).to_dict('records')
             
     except Exception as e:
-        print(f"Error loading excel: {e}")
+        print(f"Error: {e}")
 
 load_data()
 
@@ -91,17 +85,11 @@ def index():
     if keyword:
         k_lower = keyword.lower()
         for item in cached_data:
-            # 검색 조건 (품목 또는 색상)
             if k_lower in item['품목'].lower() or k_lower in item['색상'].lower():
-                # 검색된 결과에만 실시간 URL 생성
-                p = item['품목']
-                s = item['시트명']
-                if '두성' in s:
-                    item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
-                elif '삼원' in s:
-                    item['url'] = f"https://www.samwonpaper.com/product/paper/list?search.searchString={p}"
-                else:
-                    item['url'] = f"https://www.google.com/search?q={s}+{p}"
+                p, s = item['품목'], item['시트명']
+                if '두성' in s: item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
+                elif '삼원' in s: item['url'] = f"https://www.samwonpaper.com/product/paper/list?search.searchString={p}"
+                else: item['url'] = f"https://www.google.com/search?q={s}+{p}"
                 results.append(item)
     
     return render_template('index.html', results=results, keyword=keyword, authenticated=True, last_updated=last_updated)
