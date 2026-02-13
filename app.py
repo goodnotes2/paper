@@ -5,7 +5,7 @@ from datetime import datetime
 import re
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_final_v26'
+app.secret_key = 'paper_system_final_v27'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -27,6 +27,7 @@ def load_data():
             df.columns = [str(col).strip() for col in df.columns]
             df = df.ffill()
             
+            # 컬럼 매핑
             col_map = {
                 '품목': next((c for c in df.columns if '품목' in c), '품목'),
                 '색상': next((c for c in df.columns if '색상' in c or '패턴' in c), '색상'),
@@ -36,16 +37,17 @@ def load_data():
                 '두께': next((c for c in df.columns if '두께' in c), '두께')
             }
             
+            # 데이터 정제 (모든 필드 강제 문자열화)
             temp_df = pd.DataFrame()
+            temp_df['품목'] = df[col_map['품목']].fillna('').astype(str).str.strip()
+            temp_df['색상'] = df[col_map['색상']].fillna('-').astype(str).str.strip().replace(['nan', 'None', ''], '-')
+            temp_df['사이즈'] = df[col_map['사이즈']].fillna('-').astype(str).str.strip()
+            temp_df['평량'] = df[col_map['평량']].fillna('0').astype(str).str.strip().str.replace(r'\.0$', '', regex=True)
             
-            # 모든 데이터를 문자열로 변환 (이미지의 float 에러 방지)
-            temp_df['품목'] = df[col_map['품목']].fillna('').astype(str).str.strip() if col_map['품목'] in df.columns else "Unknown"
-            temp_df['색상'] = df[col_map['색상']].fillna('-').astype(str).str.strip().replace(['nan', 'None', ''], '-') if col_map['색상'] in df.columns else "-"
-            temp_df['사이즈'] = df[col_map['사이즈']].fillna('-').astype(str).str.strip() if col_map['사이즈'] in df.columns else "-"
-            temp_df['평량'] = df[col_map['평량']].fillna('0').astype(str).str.strip().str.replace(r'\.0$', '', regex=True) if col_map['평량'] in df.columns else "0"
+            # 두께 처리
+            temp_df['두께'] = pd.to_numeric(df[col_map['두께']], errors='coerce').fillna(0).astype(str)
             
-            # 두께 및 가격 처리
-            temp_df['두께'] = pd.to_numeric(df[col_map['두께']], errors='coerce').fillna(0).astype(str) if col_map['두께'] in df.columns else "0"
+            # 가격 처리
             if col_map['고시가'] in df.columns:
                 nums = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
                 temp_df['고시가'] = nums.apply(lambda x: f"{int(x):,}" if x > 0 else "0")
@@ -54,21 +56,22 @@ def load_data():
                 
             temp_df['시트명'] = str(sheet_name).strip()
             
-            # [긴급 수정] 즐겨찾기 ID에서 괄호, 공백 등 모든 특수문자 제거
-            def create_safe_id(row):
-                # 품목+평량+시트명+색상을 합친 뒤, 한글/영어/숫자만 남기고 싹 지웁니다.
-                base = f"{row['품목']}{row['평량']}{row['시트명']}{row['색상']}"
-                safe_id = re.sub(r'[^a-zA-Z0-9가-힣]', '', base)
-                return "id_" + safe_id # 앞에 id_를 붙여서 숫자로 시작하지 않게 보강
+            # [수정] 자바스크립트가 100% 인식 가능한 깨끗한 ID 생성
+            def create_clean_id(row):
+                # 품목, 평량, 색상에서 한글/영문/숫자만 추출
+                raw_text = f"{row['품목']}{row['평량']}{row['색상']}{row['시트명']}"
+                clean_text = re.sub(r'[^a-zA-Z0-9가-힣]', '', raw_text)
+                return f"paper_{clean_text}" # 숫자로 시작하지 않게 접두어 추가
 
-            temp_df['row_id'] = temp_df.apply(create_safe_id, axis=1)
+            temp_df['row_id'] = temp_df.apply(create_clean_id, axis=1)
             combined_list.append(temp_df)
             
         if combined_list:
+            # 딕셔너리로 변환하여 캐시 저장
             cached_data = pd.concat(combined_list, ignore_index=True).to_dict('records')
             
     except Exception as e:
-        print(f"Excel Loading Error: {e}")
+        print(f"Error loading excel: {e}")
 
 load_data()
 
@@ -88,13 +91,19 @@ def index():
     if keyword:
         k_lower = keyword.lower()
         for item in cached_data:
-            if k_lower in str(item.get('품목', '')).lower() or k_lower in str(item.get('색상', '')).lower():
-                p, s = item.get('품목', ''), item.get('시트명', '')
-                if '두성' in s: item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
-                elif '삼원' in s: item['url'] = f"https://www.samwonpaper.com/product/paper/list?search.searchString={p}"
-                else: item['url'] = f"https://www.google.com/search?q={s}+{p}"
+            # 검색 조건 (품목 또는 색상)
+            if k_lower in item['품목'].lower() or k_lower in item['색상'].lower():
+                # 검색된 결과에만 실시간 URL 생성
+                p = item['품목']
+                s = item['시트명']
+                if '두성' in s:
+                    item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
+                elif '삼원' in s:
+                    item['url'] = f"https://www.samwonpaper.com/product/paper/list?search.searchString={p}"
+                else:
+                    item['url'] = f"https://www.google.com/search?q={s}+{p}"
                 results.append(item)
-        
+    
     return render_template('index.html', results=results, keyword=keyword, authenticated=True, last_updated=last_updated)
 
 if __name__ == '__main__':
