@@ -5,7 +5,7 @@ from datetime import datetime
 import re
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_v29_final'
+app.secret_key = 'paper_system_v30_fixed'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -37,14 +37,13 @@ def load_data():
             }
             
             temp_df = pd.DataFrame()
-            # 1. 모든 데이터 강제 문자열 변환 및 특수문자 대응
+            # 데이터 강제 문자열화 및 정제
             temp_df['품목'] = df[col_map['품목']].fillna('').astype(str).str.strip()
             temp_df['색상'] = df[col_map['색상']].fillna('-').astype(str).str.strip().replace(['nan', 'None', ''], '-')
             temp_df['사이즈'] = df[col_map['사이즈']].fillna('-').astype(str).str.strip()
             temp_df['평량'] = df[col_map['평량']].fillna('0').astype(str).str.strip().str.replace(r'\.0$', '', regex=True)
-            
-            # 2. 두께/가격 숫자 정제
             temp_df['두께'] = pd.to_numeric(df[col_map['두께']], errors='coerce').fillna(0).astype(str)
+            
             if col_map['고시가'] in df.columns:
                 nums = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
                 temp_df['고시가'] = nums.apply(lambda x: f"{int(x):,}" if x > 0 else "0")
@@ -53,12 +52,11 @@ def load_data():
                 
             temp_df['시트명'] = str(sheet_name).strip()
             
-            # 3. [핵심] 띄어쓰기, 괄호 등 모든 특수문자를 제거한 '순수 고유 ID' 생성
+            # 고유 ID 생성 (특수문자 완전 제거)
             def create_unique_id(row):
-                # 품목+평량+색상+사이즈+시트명을 모두 합쳐 중복 방지
                 raw_text = f"{row['품목']}{row['평량']}{row['색상']}{row['사이즈']}{row['시트명']}"
                 clean_text = re.sub(r'[^a-zA-Z0-9가-힣]', '', raw_text)
-                return f"paper_{clean_text}"
+                return f"id_{clean_text}"
 
             temp_df['row_id'] = temp_df.apply(create_unique_id, axis=1)
             combined_list.append(temp_df)
@@ -89,7 +87,6 @@ def index():
         for item in cached_data:
             if k_lower in item['품목'].lower() or k_lower in item['색상'].lower():
                 p, s = item['품목'], item['시트명']
-                # 제조사별 링크 자동 생성
                 if '두성' in s: item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
                 elif '삼원' in s: item['url'] = f"https://www.samwonpaper.com/product/paper/list?search.searchString={p}"
                 else: item['url'] = f"https://www.google.com/search?q={s}+{p}"

@@ -119,10 +119,10 @@
         window.onload = () => { renderFavorites(); };
 
         function selectRow(el) {
-            document.querySelectorAll('tr').forEach(r => r.classList.remove('bg-blue-50/80', 'ring-1', 'ring-blue-200'));
-            el.classList.add('bg-blue-50/80', 'ring-1', 'ring-blue-200');
             const d = el.dataset;
             quickDisplay(d.thick, d.name, d.gram, d.price, d.size, d.color);
+            document.querySelectorAll('tr').forEach(r => r.classList.remove('bg-blue-50/80', 'ring-1', 'ring-blue-200'));
+            el.classList.add('bg-blue-50/80', 'ring-1', 'ring-blue-200');
         }
 
         function handleFavorite(e, btn) {
@@ -131,8 +131,10 @@
             const d = tr.dataset;
             let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             const idx = favs.findIndex(f => f.id === d.id);
+            
             if (idx > -1) { favs.splice(idx, 1); } 
             else { favs.push({ id: d.id, name: d.name, thick: d.thick, gram: d.gram, price: d.price, size: d.size, color: d.color }); }
+            
             localStorage.setItem('paper_favs', JSON.stringify(favs));
             renderFavorites();
         }
@@ -149,20 +151,25 @@
                 else star.classList.remove('active');
             });
 
-            // [수정] 따옴표 에러 방지를 위해 encodeURIComponent 또는 Dataset 활용 권장하나, 여기서는 백틱과 replace로 처리
-            bar.innerHTML = favs.map(f => {
-                const safeName = f.name.replace(/'/g, "\\'");
-                const safeSize = f.size.replace(/'/g, "\\'");
-                const safeColor = f.color.replace(/'/g, "\\'");
+            // 중요: 클릭 시 전달될 데이터를 문자열이 아닌 JSON 형태로 미리 변환하여 에러 방지
+            bar.innerHTML = favs.map((f, index) => {
                 return `
                     <div class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-full shadow-sm cursor-pointer hover:border-blue-300" 
-                         onclick="quickDisplay('${f.thick}', '${safeName}', '${f.gram}', '${f.price}', '${safeSize}', '${safeColor}')">
+                         id="fav_btn_${index}">
                         <span class="text-yellow-400 text-xs">★</span>
                         <span class="text-[12px] font-bold text-slate-700 whitespace-nowrap">${f.name} ${f.gram}g</span>
                         <button onclick="event.stopPropagation(); removeFav('${f.id}')" class="text-slate-300 hover:text-red-500 font-bold ml-1">×</button>
                     </div>
                 `;
             }).join('');
+
+            // 이벤트 리스너를 별도로 등록하여 특수문자/공백 완벽 대응
+            favs.forEach((f, index) => {
+                const btn = document.getElementById(`fav_btn_${index}`);
+                if(btn) {
+                    btn.onclick = () => quickDisplay(f.thick, f.name, f.gram, f.price, f.size, f.color);
+                }
+            });
         }
 
         function quickDisplay(thick, name, gram, price, size, color) {
