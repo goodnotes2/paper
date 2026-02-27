@@ -14,7 +14,7 @@
         .fav-star.active { color: #facc15 !important; }
         #favorites_bar::-webkit-scrollbar { display: none; }
         canvas { background: white; border-radius: 1rem; width: 100%; height: auto; }
-        th.sortable { cursor: pointer; position: relative; transition: background 0.2s; }
+        th.sortable { cursor: pointer; position: relative; }
         th.sortable:hover { background-color: #f1f5f9; }
         th.sortable::after { content: '↕'; font-size: 10px; margin-left: 4px; opacity: 0.5; }
     </style>
@@ -25,7 +25,7 @@
     <div class="max-w-md mx-auto mt-20 p-8 glass-card shadow-xl text-center">
         <h2 class="text-xl font-bold mb-6 text-gray-800">보안 접속</h2>
         <form method="POST" class="space-y-4">
-            <input type="password" name="password" placeholder="비밀번호 입력" class="w-full px-4 py-3 border rounded-xl text-center outline-none focus:border-blue-500 shadow-sm" autofocus>
+            <input type="password" name="password" placeholder="비밀번호 입력" class="w-full px-4 py-3 border rounded-xl text-center focus:border-blue-500 shadow-sm outline-none" autofocus>
             <button type="submit" class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold">접속하기</button>
         </form>
     </div>
@@ -51,7 +51,7 @@
             <div class="space-y-4">
                 <div class="p-6 glass-card bg-slate-900 text-white shadow-lg">
                     <div class="flex justify-between items-end mb-4">
-                        <span class="text-[10px] font-bold opacity-60 text-blue-300 uppercase">Spine Thickness</span>
+                        <span class="text-[10px] font-bold opacity-60 text-blue-300">SPINE (mm)</span>
                         <span id="seneca_result" class="text-4xl font-light font-mono text-blue-400">0.00</span>
                     </div>
                     <div class="space-y-3">
@@ -70,14 +70,14 @@
                             <input type="number" id="page_input" oninput="calc()" value="200" class="w-full p-3 rounded-xl text-black font-bold outline-none">
                         </div>
                         <div>
-                            <label class="text-[10px] text-gray-400 ml-1">합지 종류 선택</label>
+                            <label class="text-[10px] text-gray-400 ml-1">합지 종류 (qq.xlsx)</label>
                             <select id="board_select" onchange="calc()" class="w-full p-3 bg-white/10 rounded-xl text-xs outline-none">
                                 {% for b in boards %}
                                 <option value="{{ b.두께 }}" class="text-slate-900">{{ b.합지명 }} ({{ b.두께 }}mm)</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div id="selected_info" class="text-[11px] opacity-70 mt-2">선택된 종이 정보 없음</div>
+                        <div id="selected_info" class="text-[11px] opacity-70 mt-2">선택된 종이 없음</div>
                         <div id="fav_price_display" class="text-xl font-bold text-blue-400 font-mono">0원</div>
                     </div>
                     <input type="hidden" id="hidden_thick" value="0">
@@ -86,7 +86,7 @@
                 <div class="space-y-3">
                     <form method="POST" class="relative">
                         <input type="text" name="keyword" value="{{ keyword }}" placeholder="종이 이름 검색..." class="w-full p-4 glass-card shadow-md outline-none pr-24">
-                        <button type="submit" class="absolute right-2 top-2 bg-blue-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-blue-700">검색</button>
+                        <button type="submit" class="absolute right-2 top-2 bg-blue-600 text-white px-5 py-2 rounded-xl font-bold">검색</button>
                     </form>
                     <div id="favorites_bar" class="flex flex-nowrap gap-2 overflow-x-auto pb-2"></div>
                 </div>
@@ -95,7 +95,7 @@
             <div class="md:col-span-2 space-y-4">
                 <div class="glass-card p-4 shadow-sm text-center">
                     <canvas id="mainCanvas" width="800" height="300"></canvas>
-                    <div id="final_formula" class="mt-2 p-3 bg-slate-50 rounded-xl text-center font-mono text-[11px] text-slate-500 font-bold">규격 대기 중...</div>
+                    <div id="final_formula" class="mt-2 p-3 bg-slate-50 rounded-xl text-center font-mono text-[11px] text-slate-500 font-bold">규격 계산 중...</div>
                 </div>
 
                 {% if results %}
@@ -116,7 +116,9 @@
                             <tr class="hover:bg-blue-50 cursor-pointer" data-id="{{ item.row_id }}" 
                                 data-name="{{ item.품목 }}" data-thick="{{ item.두께 }}" data-gram="{{ item.평량 }}"
                                 data-price="{{ item.고시가 }}" data-color="{{ item.색상 }}" onclick="selectRow(this)">
-                                <td class="p-3 text-center"><button onclick="handleFavorite(event, this)" class="fav-star text-gray-200 text-2xl">★</button></td>
+                                <td class="p-3 text-center">
+                                    <button onclick="handleFavorite(event, this)" class="fav-star text-gray-200 text-2xl">★</button>
+                                </td>
                                 <td class="p-3">
                                     <div class="font-bold text-slate-900">{{ item.품목 }}</div>
                                     <div class="text-[10px] text-slate-400">{{ item.색상 }} | {{ item.시트명 }}</div>

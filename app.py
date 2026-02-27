@@ -17,6 +17,7 @@ def load_data():
     file_path = 'search.xlsx'
     qq_path = 'qq.xlsx'
     
+    # 1. 메인 검색 데이터 로드
     if os.path.exists(file_path):
         try:
             mtime = os.path.getmtime(file_path)
@@ -25,7 +26,8 @@ def load_data():
             combined_list = []
             for sheet_name, df in all_sheets.items():
                 df.columns = [str(col).strip() for col in df.columns]
-                df = df.astype(str).replace(['nan', 'None', 'nan '], '')
+                # 모든 데이터를 문자열로 변환 (검색 에러 방지 핵심)
+                df = df.fillna('').astype(str)
                 
                 def find_col(keywords, default):
                     for c in df.columns:
@@ -44,16 +46,20 @@ def load_data():
 
                 temp_df = pd.DataFrame()
                 temp_df['품목'] = df[col_map['품목']].str.strip()
-                temp_df['색상'] = df.get(col_map['색상'], pd.Series(['']*len(df))).str.strip()
-                temp_df['평량'] = df.get(col_map['평량'], pd.Series(['0']*len(df))).str.replace(r'\.0$', '', regex=True)
-                temp_df['두께'] = pd.to_numeric(df.get(col_map['두께'], 0), errors='coerce').fillna(0).astype(str)
+                temp_df['색상'] = df[col_map['색상']].str.strip() if col_map['색상'] in df.columns else ''
+                temp_df['평량'] = df[col_map['평량']].str.replace(r'\.0$', '', regex=True) if col_map['평량'] in df.columns else '0'
                 
-                price_col = df.get(col_map['고시가'], 0)
-                nums = pd.to_numeric(price_col, errors='coerce').fillna(0)
+                # 두께 숫자 추출
+                thick_val = df[col_map['두께']] if col_map['두께'] in df.columns else '0'
+                temp_df['두께'] = pd.to_numeric(thick_val.str.replace(r'[^0-9.]', '', regex=True), errors='coerce').fillna(0).astype(str)
+                
+                # 고시가 콤마 처리
+                price_val = df[col_map['고시가']] if col_map['고시가'] in df.columns else '0'
+                nums = pd.to_numeric(price_val.str.replace(r'[^0-9.]', '', regex=True), errors='coerce').fillna(0)
                 temp_df['고시가'] = nums.apply(lambda x: f"{int(x):,}" if x > 0 else "0")
                 
                 temp_df['시트명'] = str(sheet_name).strip()
-                temp_df['row_id'] = temp_df.apply(lambda r: f"id_{re.sub(r'[^a-zA-Z0-9가-힣]', '', str(r['품목'])+str(r['평량'])+str(r['시트명']))}", axis=1)
+                temp_df['row_id'] = temp_df.apply(lambda r: f"id_{re.sub(r'[^a-zA-Z0-9]', '', str(r['품목'])+str(r['평량'])+str(r['시트명']))}", axis=1)
                 combined_list.append(temp_df)
             
             if combined_list:
@@ -61,12 +67,24 @@ def load_data():
         except Exception as e:
             print(f"Search Excel Error: {e}")
 
+    # 2. 합지 데이터 로드 (qq.xlsx 수정)
     if os.path.exists(qq_path):
         try:
             df_qq = pd.read_excel(qq_path, engine='openpyxl')
             df_qq.columns = [str(col).strip() for col in df_qq.columns]
-            board_data = df_qq.to_dict(orient='records')
-        except: board_data = [{'합지명': '기본 1000g', '두께': 1.6}]
+            # 합지명과 두께 컬럼을 명확히 지정
+            name_col = next((c for c in df_qq.columns if '합지' in c or '품명' in c), df_qq.columns[0])
+            thick_col = next((c for c in df_qq.columns if '두께' in c or 'mm' in c), df_qq.columns[1])
+            
+            board_data = []
+            for _, row in df_qq.iterrows():
+                board_data.append({
+                    '합지명': str(row[name_col]).strip(),
+                    '두께': pd.to_numeric(str(row[thick_col]).replace('mm',''), errors='coerce') or 0
+                })
+        except Exception as e:
+            print(f"Board Excel Error: {e}")
+            board_data = [{'합지명': '기본 1000g', '두께': 1.6}]
     else:
         board_data = [{'합지명': '1000g(기본)', '두께': 1.6}, {'합지명': '1200g(기본)', '두께': 1.9}]
 
@@ -86,7 +104,10 @@ def index():
     if keyword:
         k = keyword.lower()
         for item in cached_data:
-            if k in item['품목'].lower() or k in item['색상'].lower():
+            # 품목과 색상을 확실히 문자열로 처리하여 검색 (에러 발생 지점 해결)
+            name_str = str(item.get('품목', '')).lower()
+            color_str = str(item.get('색상', '')).lower()
+            if k in name_str or k in color_str:
                 p, s = item['품목'], item['시트명']
                 if '두성' in s: item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
                 elif '삼원' in s: item['url'] = f"https://www.samwonpaper.com/product/paper/list?search.searchString={p}"
