@@ -5,7 +5,7 @@ from datetime import datetime
 import re
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_v40_integrated'
+app.secret_key = 'paper_system_v45_final_integrated'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -17,6 +17,7 @@ def load_data():
     file_path = 'search.xlsx'
     qq_path = 'qq.xlsx'
     
+    # 1. search.xlsx 로드 (타입 에러 방지 강화)
     if os.path.exists(file_path):
         try:
             mtime = os.path.getmtime(file_path)
@@ -25,8 +26,9 @@ def load_data():
             combined_list = []
             for sheet_name, df in all_sheets.items():
                 df.columns = [str(col).strip() for col in df.columns]
-                # 모든 데이터를 문자열로 변환하고 결측치 제거
-                df = df.fillna('').astype(str)
+                
+                # 로그 에러 해결: 모든 데이터를 문자열로 변환 후 결측치 처리
+                df = df.astype(str).replace(['nan', 'None', 'nan '], '')
                 
                 col_map = {
                     '품목': next((c for c in df.columns if '품목' in c), '품목'),
@@ -42,11 +44,10 @@ def load_data():
                 temp_df['색상'] = df[col_map['색상']].str.strip()
                 temp_df['사이즈'] = df[col_map['사이즈']].str.strip()
                 temp_df['평량'] = df[col_map['평량']].str.strip().str.replace(r'\.0$', '', regex=True)
-                # 두께를 숫자로 변환 시도 후 실패하면 '0' 처리
                 temp_df['두께'] = pd.to_numeric(df[col_map['두께']], errors='coerce').fillna(0).astype(str)
                 
+                # 고시가 콤마 처리
                 if col_map['고시가'] in df.columns:
-                    # 'float'와 'str' 혼합 방지를 위해 처리
                     nums = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
                     temp_df['고시가'] = nums.apply(lambda x: f"{int(x):,}" if x > 0 else "0")
                 else:
@@ -54,12 +55,12 @@ def load_data():
                 
                 temp_df['시트명'] = str(sheet_name).strip()
                 
-                # 오류 발생 지점 수정: 모든 요소를 str()로 감싸서 확실히 문자열 결합
-                def safe_id(row):
+                # 유니크 ID 생성 시 모든 요소를 str()로 명시적 변환 (로그 에러 근본 해결)
+                def make_id(row):
                     raw = str(row['품목']) + str(row['평량']) + str(row['시트명'])
                     return f"id_{re.sub(r'[^a-zA-Z0-9가-힣]', '', raw)}"
                 
-                temp_df['row_id'] = temp_df.apply(safe_id, axis=1)
+                temp_df['row_id'] = temp_df.apply(make_id, axis=1)
                 combined_list.append(temp_df)
             
             if combined_list:
@@ -67,15 +68,16 @@ def load_data():
         except Exception as e:
             print(f"Search Excel Error: {e}")
 
+    # 2. qq.xlsx 로드 (합지 데이터)
     if os.path.exists(qq_path):
         try:
             df_qq = pd.read_excel(qq_path, engine='openpyxl')
             df_qq.columns = [str(col).strip() for col in df_qq.columns]
             board_data = df_qq.to_dict(orient='records')
         except:
-            board_data = [{'합지명': '1000g(기본)', '두께': 1.6}]
+            board_data = [{'합지명': '기본 1000g', '두께': 1.6}]
     else:
-        board_data = [{'합지명': '1000g(기본)', '두께': 1.6}]
+        board_data = [{'합지명': '기본 1000g', '두께': 1.6}, {'합지명': '기본 1200g', '두께': 1.9}]
 
 load_data()
 
@@ -93,7 +95,6 @@ def index():
     if keyword:
         k_lower = keyword.lower()
         for item in cached_data:
-            # 품목 또는 색상에서 검색 허용
             if k_lower in item['품목'].lower() or k_lower in item['색상'].lower():
                 p, s = item['품목'], item['시트명']
                 if '두성' in s: item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
