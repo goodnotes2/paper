@@ -1,136 +1,85 @@
 import pandas as pd
-import numpy as np
+from flask import Flask, render_template, request, session, redirect, url_for
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-import sys
-import traceback
-import base64
+from datetime import datetime
+import re
 
 app = Flask(__name__)
+app.secret_key = 'paper_system_v32_final'
 
-# 세션 보안키 설정
-raw_secret_key_base64 = os.environ.get('FLASK_SECRET_KEY', 'your_single_access_secret_key_base64_default')
-try:
-    app.config['SECRET_KEY'] = base64.urlsafe_b64decode(raw_secret_key_base64)
-except Exception as e:
-    app.config['SECRET_KEY'] = b'fallback_secret_key_if_decoding_fails'
+SITE_PASSWORD = "03877"
+cached_data = []
+board_data = []
+last_updated = ""
 
-# --- 설정 ---
-excel_file_name = 'search.xlsx'
-image_file_name = 'search.png'
-sheets = ['두성', '삼원', '한국', '무림', '삼화', '서경', '한솔', '전주']
-ACCESS_PASSWORD = os.environ.get('APP_ACCESS_PASSWORD', 'your_secret_password_default')
-
-company_urls = {
-    '두성': 'https://www.doosungpaper.co.kr/goods/goods_search.php?keyword=',
-    '삼원': 'https://www.samwonpaper.com/product/paper/list?search.searchString=',
-    '한국': 'https://www.hankukpaper.com/ko/product/listProductinfo.do',
-    '무림': 'https://www.moorim.co.kr:13002/product/paper.php',
-    '삼화': 'https://www.samwhapaper.com/product/samwhapaper/all?keyword=',
-    '서경': 'https://wedesignpaper.com/search?type=shopping&sort=consensus_desc&keyword=',
-    '한솔': 'https://www.hansolpaper.co.kr/product/insper',
-    '전주': 'https://jeonjupaper.com/publicationpaper'
-}
-
-# --- 데이터 로드 함수 (평량 빈칸 해결 버전) ---
 def load_data():
-    data = []
-    excel_file_path = os.path.join(app.root_path, excel_file_name)
-
-    if not os.path.exists(excel_file_path):
-        return pd.DataFrame()
-
-    for sheet in sheets:
-        try:
-            df = pd.read_excel(excel_file_path, sheet_name=sheet, engine='openpyxl')
-            
-            # 1. 컬럼명 공백 제거 및 표준화
-            df.columns = df.columns.astype(str).str.strip().str.replace(r'\s+', ' ', regex=True)
-            
-            # 2. 필수 컬럼 이름 통일
-            name_map = {'품목': '품목', '사이즈': '사이즈', '평량': '평량', '색상': '색상 및 패턴'}
-            for col in df.columns:
-                clean_col = col.replace(' ', '')
-                for key, val in name_map.items():
-                    if key in clean_col:
-                        df.rename(columns={col: val}, inplace=True)
-
-            # 3. 평량 컬럼 특수 처리: 숫자가 아닌 값(점선 등)을 빈칸(NaN)으로 변환
-            if '평량' in df.columns:
-                df['평량'] = pd.to_numeric(df['평량'], errors='coerce')
-                df['평량'] = df['평량'].ffill()
-
-            # 4. 나머지 컬럼 자동 채우기
-            for target in ['품목', '사이즈', '색상 및 패턴']:
-                if target in df.columns:
-                    df[target] = df[target].ffill()
-
-            df['시트명'] = sheet
-            data.append(df)
-        except Exception as e:
-            print(f"Error loading sheet {sheet}: {e}", file=sys.stderr)
+    global cached_data, last_updated, board_data
+    file_path = 'search.xlsx'
+    qq_path = 'qq.xlsx'
     
-    return pd.concat(data, ignore_index=True) if data else pd.DataFrame()
+    # 1. search.xlsx 로드 (오류 방지 강화)
+    if os.path.exists(file_path):
+        try:
+            mtime = os.path.getmtime(file_path)
+            last_updated = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M')
+            all_sheets = pd.read_excel(file_path, sheet_name=None, engine='openpyxl')
+            combined_list = []
+            for sheet_name, df in all_sheets.items():
+                df.columns = [str(col).strip() for col in df.columns]
+                # fillna 이전에 모든 데이터를 문자열로 변환하여 'str object has no attribute fillna' 오류 방지
+                df = df.astype(str).replace(['nan', 'None', 'nan '], '')
+                
+                col_map = {
+                    '품목': next((c for c in df.columns if '품목' in c), '품목'),
+                    '두께': next((c for c in df.columns if '두께' in c), '두께'),
+                    '평량': next((c for c in df.columns if '평량' in c), '평량')
+                }
+                
+                temp_df = pd.DataFrame()
+                temp_df['품목'] = df[col_map['품목']].str.strip()
+                temp_df['두께'] = pd.to_numeric(df[col_map['두께']], errors='coerce').fillna(0).astype(str)
+                temp_df['평량'] = df[col_map['평량']].str.replace(r'\.0$', '', regex=True)
+                temp_df['시트명'] = str(sheet_name).strip()
+                temp_df['row_id'] = temp_df.apply(lambda r: f"id_{re.sub(r'[^a-zA-Z0-9가-힣]', '', r['품목']+r['평량']+r['시트명'])}", axis=1)
+                combined_list.append(temp_df)
+            
+            if combined_list:
+                cached_data = pd.concat(combined_list, ignore_index=True).to_dict('records')
+        except Exception as e:
+            print(f"Excel Load Error: {e}")
 
-df_all = load_data()
+    # 2. qq.xlsx 로드 (도면용 합지 데이터)
+    if os.path.exists(qq_path):
+        try:
+            df_qq = pd.read_excel(qq_path, engine='openpyxl')
+            board_data = df_qq.to_dict(orient='records')
+        except:
+            board_data = [{'합지명': '기본 1000g', '두께': 1.6}]
+    else:
+        board_data = [{'합지명': '기본 1000g', '두께': 1.6}]
 
-def calculate_seneca(page_count, thickness):
-    try:
-        pc, t = float(page_count), float(thickness)
-        if t <= 0: return "두께 오류"
-        return f"{(pc / 2) * t / 1000:,.1f}"
-    except:
-        return "입력 오류"
+load_data()
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    global df_all
-    if df_all.empty: df_all = load_data()
-
-    authenticated = session.get('authenticated', False)
-    search_keyword = (request.form.get('keyword', '') if request.method == 'POST' else request.args.get('keyword', '')).strip()
-    
-    seneca_result = None
-    search_results = []
-    message = ""
-
     if request.method == 'POST' and 'password' in request.form:
-        if request.form.get('password') == ACCESS_PASSWORD:
+        if request.form.get('password') == SITE_PASSWORD:
             session['authenticated'] = True
             return redirect(url_for('index'))
-        else:
-            flash('비밀번호가 틀렸습니다.', 'danger')
-            return render_template('index.html', authenticated=False)
+    if not session.get('authenticated'):
+        return render_template('index.html', authenticated=False)
 
-    if authenticated:
-        if request.method == 'POST' and 'calculate_seneca_btn' in request.form:
-            pc = request.form.get('seneca_page_count', '').strip()
-            tk = request.form.get('seneca_selected_thickness_hidden', '').strip()
-            if pc and tk and tk != 'nan': seneca_result = calculate_seneca(pc, tk)
-
-        if not df_all.empty:
-            if not search_keyword:
-                res_df = df_all.head(50).copy()
-            elif search_keyword in sheets:
-                res_df = df_all[df_all['시트명'] == search_keyword].copy()
-            else:
-                res_df = df_all[df_all['품목'].astype(str).str.contains(search_keyword, case=False, na=False)].copy()
-
-            for _, row in res_df.iterrows():
-                sheet_name = row.get('시트명')
-                search_results.append({
-                    '품목': row.get('품목', 'N/A'),
-                    '사이즈': row.get('사이즈', 'N/A'),
-                    '평량': row.get('평량', 'N/A'),
-                    '색상_및_패턴': row.get('색상 및 패턴', 'N/A'),
-                    '고시가': f"{int(float(row['고시가'])):,}" if pd.notna(row.get('고시가')) and str(row.get('고시가')).replace('.','').isdigit() else 'N/A',
-                    '두께': row.get('두께', 'N/A'),
-                    '시트명': sheet_name,
-                    'url': f"{company_urls.get(sheet_name, '#')}{search_keyword}" if sheet_name in ['두성','삼원','서경','삼화'] else company_urls.get(sheet_name, '#')
-                })
-        return render_template('index.html', authenticated=True, results=search_results, keyword=search_keyword, message=message, seneca_result=seneca_result)
-
-    return render_template('index.html', authenticated=False)
+    keyword = request.form.get('keyword', '').strip() if request.method == 'POST' else ""
+    results = []
+    if keyword:
+        k_lower = keyword.lower()
+        for item in cached_data:
+            if k_lower in item['품목'].lower():
+                results.append(item)
+    
+    return render_template('index.html', results=results, keyword=keyword, 
+                           authenticated=True, last_updated=last_updated, boards=board_data)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
