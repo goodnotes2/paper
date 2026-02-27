@@ -5,7 +5,7 @@ from datetime import datetime
 import re
 
 app = Flask(__name__)
-app.secret_key = 'paper_system_v35_render_fix'
+app.secret_key = 'paper_system_v40_integrated'
 
 SITE_PASSWORD = "03877"
 cached_data = []
@@ -17,7 +17,6 @@ def load_data():
     file_path = 'search.xlsx'
     qq_path = 'qq.xlsx'
     
-    # 1. search.xlsx 로드 (오류 철저 방어)
     if os.path.exists(file_path):
         try:
             mtime = os.path.getmtime(file_path)
@@ -26,8 +25,8 @@ def load_data():
             combined_list = []
             for sheet_name, df in all_sheets.items():
                 df.columns = [str(col).strip() for col in df.columns]
-                # 모든 데이터를 문자열로 변환 후 결측치 처리 (fillna 에러 방지)
-                df = df.astype(str).replace(['nan', 'None', 'nan '], '')
+                # 모든 데이터를 문자열로 변환하고 결측치 제거
+                df = df.fillna('').astype(str)
                 
                 col_map = {
                     '품목': next((c for c in df.columns if '품목' in c), '품목'),
@@ -43,16 +42,24 @@ def load_data():
                 temp_df['색상'] = df[col_map['색상']].str.strip()
                 temp_df['사이즈'] = df[col_map['사이즈']].str.strip()
                 temp_df['평량'] = df[col_map['평량']].str.strip().str.replace(r'\.0$', '', regex=True)
+                # 두께를 숫자로 변환 시도 후 실패하면 '0' 처리
                 temp_df['두께'] = pd.to_numeric(df[col_map['두께']], errors='coerce').fillna(0).astype(str)
                 
                 if col_map['고시가'] in df.columns:
+                    # 'float'와 'str' 혼합 방지를 위해 처리
                     nums = pd.to_numeric(df[col_map['고시가']], errors='coerce').fillna(0)
                     temp_df['고시가'] = nums.apply(lambda x: f"{int(x):,}" if x > 0 else "0")
                 else:
                     temp_df['고시가'] = "0"
                 
                 temp_df['시트명'] = str(sheet_name).strip()
-                temp_df['row_id'] = temp_df.apply(lambda r: f"id_{re.sub(r'[^a-zA-Z0-9가-힣]', '', r['품목']+r['평량']+r['시트명'])}", axis=1)
+                
+                # 오류 발생 지점 수정: 모든 요소를 str()로 감싸서 확실히 문자열 결합
+                def safe_id(row):
+                    raw = str(row['품목']) + str(row['평량']) + str(row['시트명'])
+                    return f"id_{re.sub(r'[^a-zA-Z0-9가-힣]', '', raw)}"
+                
+                temp_df['row_id'] = temp_df.apply(safe_id, axis=1)
                 combined_list.append(temp_df)
             
             if combined_list:
@@ -60,7 +67,6 @@ def load_data():
         except Exception as e:
             print(f"Search Excel Error: {e}")
 
-    # 2. qq.xlsx 로드 (합지 데이터)
     if os.path.exists(qq_path):
         try:
             df_qq = pd.read_excel(qq_path, engine='openpyxl')
@@ -69,7 +75,7 @@ def load_data():
         except:
             board_data = [{'합지명': '1000g(기본)', '두께': 1.6}]
     else:
-        board_data = [{'합지명': '1000g(기본)', '두께': 1.6}, {'합지명': '1200g(기본)', '두께': 1.9}]
+        board_data = [{'합지명': '1000g(기본)', '두께': 1.6}]
 
 load_data()
 
@@ -87,8 +93,8 @@ def index():
     if keyword:
         k_lower = keyword.lower()
         for item in cached_data:
+            # 품목 또는 색상에서 검색 허용
             if k_lower in item['품목'].lower() or k_lower in item['색상'].lower():
-                # 두성/삼원 링크 생성 로직 유지
                 p, s = item['품목'], item['시트명']
                 if '두성' in s: item['url'] = f"https://www.doosungpaper.co.kr/goods/goods_search.php?keyword={p}"
                 elif '삼원' in s: item['url'] = f"https://www.samwonpaper.com/product/paper/list?search.searchString={p}"
@@ -99,6 +105,5 @@ def index():
                            authenticated=True, last_updated=last_updated, boards=board_data)
 
 if __name__ == '__main__':
-    # Render 포트 오류 해결을 위한 핵심 코드
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
