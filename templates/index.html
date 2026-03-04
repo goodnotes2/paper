@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAPER PRO V150</title>
+    <title>PAPER PRO V20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'IBM Plex Sans KR', sans-serif; background-color: #f1f5f9; }
         .glass-card { background: white; border-radius: 1rem; border: 1px solid #e2e8f0; }
-        .mode-btn { cursor: pointer; transition: 0.2s; border: 2px solid #e2e8f0; border-radius: 12px; background: white; padding: 15px; text-align: center; color: #64748b; }
+        .mode-btn { cursor: pointer; transition: 0.2s; border: 2px solid #e2e8f0; border-radius: 12px; background: white; padding: 15px; text-align: center; }
         .mode-btn.active { border-color: #3b82f6; background-color: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
         .mode-btn.active p { color: rgba(255, 255, 255, 0.8); }
         .fav-star.active { color: #facc15 !important; }
-        th.sortable { cursor: pointer; }
+        th.sortable { cursor: pointer; position: relative; }
         th.sortable:hover { background-color: #f8fafc; }
     </style>
 </head>
@@ -23,8 +23,8 @@
     <div class="max-w-md mx-auto mt-20 p-8 glass-card shadow-xl text-center">
         <h2 class="text-xl font-bold mb-6">보안 접속</h2>
         <form method="POST" class="space-y-4">
-            <input type="password" name="password" placeholder="비밀번호" class="w-full p-4 border rounded-xl text-center outline-none focus:border-blue-500" autofocus>
-            <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold uppercase">Login</button>
+            <input type="password" name="password" placeholder="비밀번호 입력" class="w-full p-4 border rounded-xl text-center outline-none focus:border-blue-500" autofocus>
+            <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold">확인</button>
         </form>
     </div>
     {% else %}
@@ -32,13 +32,16 @@
     <div class="max-w-6xl mx-auto space-y-4">
         <div class="grid grid-cols-3 gap-3">
             <div class="mode-btn active" id="btn-soft" onclick="setMode('soft')">
-                <p class="text-[11px] font-bold mb-1">인조없음</p><p class="font-bold text-sm md:text-base">환양장미소</p>
+                <p class="text-[11px] font-bold mb-1">인조없음</p>
+                <p class="font-bold text-sm md:text-base">환양장미소</p>
             </div>
             <div class="mode-btn" id="btn-hard" onclick="setMode('hard')">
-                <p class="text-[11px] font-bold mb-1">홈 11mm</p><p class="font-bold text-sm md:text-base">각양장</p>
+                <p class="text-[11px] font-bold mb-1">홈 11mm</p>
+                <p class="font-bold text-sm md:text-base">각양장</p>
             </div>
             <div class="mode-btn" id="btn-leather" onclick="setMode('leather')">
-                <p class="text-[11px] font-bold mb-1">홈 8mm</p><p class="font-bold text-sm md:text-base">인조있음</p>
+                <p class="text-[11px] font-bold mb-1">홈 8mm</p>
+                <p class="font-bold text-sm md:text-base">인조있음</p>
             </div>
         </div>
 
@@ -46,7 +49,7 @@
             <div class="space-y-4">
                 <div class="p-6 glass-card bg-slate-900 text-white shadow-lg">
                     <div class="flex justify-between items-end mb-6">
-                        <span class="text-xs font-bold text-blue-300">SPINE (mm)</span>
+                        <span class="text-xs font-bold text-blue-300">SPINE THICKNESS</span>
                         <span id="seneca_result" class="text-5xl font-light font-mono text-blue-400">0.00</span>
                     </div>
                     <div class="space-y-4">
@@ -56,14 +59,14 @@
                         </div>
                         <div><label class="text-[11px] text-gray-400">페이지수(P)</label><input type="number" id="page_input" value="200" oninput="calc()" class="w-full p-4 rounded-xl text-black font-bold outline-none text-lg"></div>
                         <div>
-                            <label class="text-[11px] text-gray-400">합지 선택 (기본 1,000g)</label>
+                            <label class="text-[11px] text-gray-400">합지 선택 (기본 1000g)</label>
                             <select id="board_select" onchange="calc()" class="w-full p-3 bg-white/10 rounded-xl text-sm outline-none border border-white/20">
                                 {% for b in boards %}
                                 <option value="{{ b.두께 }}" class="text-slate-900">{{ b.합지명 }} ({{ b.두께 }}mm)</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div id="selected_info" class="text-xs opacity-60">종이 미선택</div>
+                        <div id="selected_info" class="text-xs opacity-60">종이를 선택해주세요</div>
                         <div id="fav_price_display" class="text-2xl font-bold text-blue-400 font-mono">0원</div>
                         <input type="hidden" id="hidden_thick" value="0">
                     </div>
@@ -71,7 +74,7 @@
 
                 <div class="space-y-3">
                     <form method="POST" class="relative">
-                        <input type="text" name="keyword" value="{{ keyword }}" placeholder="종이 검색 (예: 아코팩)" class="w-full p-4 glass-card shadow-sm outline-none pr-24 border-2 focus:border-blue-500">
+                        <input type="text" name="keyword" value="{{ keyword }}" placeholder="아코팩 검색..." class="w-full p-4 glass-card shadow-sm outline-none pr-24 border-2 focus:border-blue-500">
                         <button type="submit" class="absolute right-2 top-2 bg-blue-600 text-white px-5 py-2 rounded-xl font-bold">검색</button>
                     </form>
                     <div id="favorites_bar" class="flex flex-nowrap gap-2 overflow-x-auto pb-2"></div>
@@ -81,31 +84,38 @@
             <div class="md:col-span-2 space-y-4">
                 <div class="glass-card p-4 shadow-sm text-center bg-white">
                     <canvas id="mainCanvas" width="800" height="300"></canvas>
-                    <div id="final_formula" class="mt-3 p-3 bg-slate-50 rounded-xl font-mono text-xs text-slate-500 font-bold">종이와 합지를 선택하세요.</div>
+                    <div id="final_formula" class="mt-3 p-3 bg-slate-50 rounded-xl font-mono text-xs text-slate-500 font-bold">합지와 종이를 선택하면 규격이 표시됩니다.</div>
                 </div>
 
                 {% if results %}
                 <div class="glass-card overflow-hidden shadow-sm">
                     <table class="w-full text-left text-sm" id="resultTable">
-                        <thead class="bg-slate-50 border-b text-[11px] text-slate-500 font-bold uppercase">
+                        <thead class="bg-slate-50 border-b text-[11px] text-slate-500 font-bold">
                             <tr>
                                 <th class="p-4 text-center">⭐</th>
-                                <th class="p-4 sortable" onclick="sortTable(1, 'str')">품목 / 정보</th>
+                                <th class="p-4 sortable" onclick="sortTable(1, 'str')">품목 정보</th>
                                 <th class="p-4 text-center sortable" onclick="sortTable(2, 'num')">평량(g)</th>
                                 <th class="p-4 text-center">두께</th>
                                 <th class="p-4 text-right">고시가</th>
-                                <th class="p-4 text-center">🔗</th>
+                                <th class="p-4 text-center">링크</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y">
                             {% for item in results %}
-                            <tr class="hover:bg-blue-50 cursor-pointer" data-id="{{ item.row_id }}" data-name="{{ item.품목 }}" data-thick="{{ item.두께 }}" data-gram="{{ item.평량 }}" data-price="{{ item.고시가 }}" data-color="{{ item.색상 }}" onclick="selectRow(this)">
+                            <tr class="hover:bg-blue-50 cursor-pointer" 
+                                data-id="{{ item.row_id }}" 
+                                data-name="{{ item.품목 }}" 
+                                data-thick="{{ item.두께 }}" 
+                                data-gram="{{ item.평량 }}" 
+                                data-price="{{ item.고시가 }}" 
+                                data-color="{{ item.색상 }}" 
+                                onclick="selectRow(this)">
                                 <td class="p-4 text-center"><button onclick="handleFavorite(event, this)" class="fav-star text-gray-200 text-2xl">★</button></td>
                                 <td class="p-4"><div class="font-bold text-slate-900">{{ item.품목 }}</div><div class="text-[11px] text-slate-400">{{ item.색상 }} | {{ item.시트명 }}</div></td>
                                 <td class="p-4 text-center font-bold text-slate-600">{{ item.평량 }}</td>
                                 <td class="p-4 text-center font-bold text-blue-600">{{ item.두께 }}μm</td>
                                 <td class="p-4 font-bold text-right">{{ item.고시가 }}</td>
-                                <td class="p-4 text-center"><a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" class="p-2 bg-slate-100 rounded-lg text-blue-600">Link</a></td>
+                                <td class="p-4 text-center"><a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" class="p-2 bg-slate-100 rounded-lg text-blue-600">🔗</a></td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -132,7 +142,7 @@
         function selectRow(el) {
             const d = el.dataset;
             document.getElementById('hidden_thick').value = d.thick;
-            document.getElementById('selected_info').innerText = `${d.name} ${d.color} (${d.gram}g)`;
+            document.getElementById('selected_info').innerText = `${d.name} (${d.gram}g)`;
             document.getElementById('fav_price_display').innerText = `${d.price}원`;
             calc();
         }
@@ -163,7 +173,7 @@
 
             const boardW = w - 4;
             const bleed = 17;
-            const totalW = bleed + boardW + (joint * 2) + spine + boardW + bleed;
+            const totalW = bleed + boardW + (joint * 2) + (spine || 0) + boardW + bleed;
             const totalH = bleed + h + bleed;
 
             document.getElementById('seneca_result').innerText = error ? "ERR" : (spine || "0.00");
@@ -183,9 +193,9 @@
 
             const box = (w, label, color, isB = false) => {
                 const cw = w * scale;
-                ctx.fillStyle = "#fee2e2"; ctx.fillRect(x, y_s, cw, bleedH); // 상단여분
-                ctx.fillStyle = isB ? "#fee2e2" : color; ctx.fillRect(x, y_s + bleedH, cw, drawH); // 본체
-                ctx.fillStyle = "#fee2e2"; ctx.fillRect(x, y_s + bleedH + drawH, cw, bleedH); // 하단여분
+                ctx.fillStyle = "#fee2e2"; ctx.fillRect(x, y_s, cw, bleedH);
+                ctx.fillStyle = isB ? "#fee2e2" : color; ctx.fillRect(x, y_s + bleedH, cw, drawH);
+                ctx.fillStyle = "#fee2e2"; ctx.fillRect(x, y_s + bleedH + drawH, cw, bleedH);
                 ctx.strokeStyle = "#cbd5e1"; ctx.strokeRect(x, y_s, cw, bleedH + drawH + bleedH);
                 ctx.fillStyle = "#334155"; ctx.font = "bold 9px Arial";
                 ctx.fillText(label, x + 2, y_s - 8);
