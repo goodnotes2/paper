@@ -62,7 +62,10 @@
                             <label class="text-[11px] text-gray-400">합지 선택 (기본 1000g)</label>
                             <select id="board_select" onchange="calc()" class="w-full p-3 bg-white/10 rounded-xl text-sm outline-none border border-white/20">
                                 {% for b in boards %}
-                                <option value="{{ b.두께 }}" class="text-slate-900">{{ b.합지명 }} ({{ b.두께 }}mm)</option>
+                                <option value="{{ b.두께 }}"
+                                        data-gak="{{ b.각양장_앞뒤 }}"
+                                        data-miso="{{ b.미소_앞뒤 }}"
+                                        class="text-slate-900">{{ b.합지명 }} ({{ b.두께 }}mm)</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -102,13 +105,13 @@
                         </thead>
                         <tbody class="divide-y">
                             {% for item in results %}
-                            <tr class="hover:bg-blue-50 cursor-pointer" 
-                                data-id="{{ item.row_id }}" 
-                                data-name="{{ item.품목 }}" 
-                                data-thick="{{ item.두께 }}" 
-                                data-gram="{{ item.평량 }}" 
-                                data-price="{{ item.고시가 }}" 
-                                data-color="{{ item.색상 }}" 
+                            <tr class="hover:bg-blue-50 cursor-pointer"
+                                data-id="{{ item.row_id }}"
+                                data-name="{{ item.품목 }}"
+                                data-thick="{{ item.두께 }}"
+                                data-gram="{{ item.평량 }}"
+                                data-price="{{ item.고시가 }}"
+                                data-color="{{ item.색상 }}"
                                 onclick="selectRow(this)">
                                 <td class="p-4 text-center"><button onclick="handleFavorite(event, this)" class="fav-star text-gray-200 text-2xl">★</button></td>
                                 <td class="p-4"><div class="font-bold text-slate-900">{{ item.품목 }}</div><div class="text-[11px] text-slate-400">{{ item.색상 }} | {{ item.시트명 }}</div></td>
@@ -148,36 +151,53 @@
         }
 
         function calc() {
-            const w = parseFloat(document.getElementById('bookW').value) || 0;
-            const h = parseFloat(document.getElementById('bookH').value) || 0;
-            const pg = parseInt(document.getElementById('page_input').value) || 0;
-            const t_um = parseFloat(document.getElementById('hidden_thick').value) || 0;
-            const bMm = parseFloat(document.getElementById('board_select').value) || 0;
+            const w      = parseFloat(document.getElementById('bookW').value) || 0;
+            const h      = parseFloat(document.getElementById('bookH').value) || 0;
+            const pg     = parseInt(document.getElementById('page_input').value) || 0;
+            const t_um   = parseFloat(document.getElementById('hidden_thick').value) || 0;
+            const sel    = document.getElementById('board_select');
+            const bMm    = parseFloat(sel.value) || 0;
+            const gakFB  = parseFloat(sel.selectedOptions[0]?.dataset.gak) || 0;  // 각양장 앞뒤
+            const misoFB = parseFloat(sel.selectedOptions[0]?.dataset.miso) || 0; // 미소 앞뒤
 
-            const textThick = (t_um * pg) / 2 / 1000;
+            // μm → mm, 내지 두께 = 두께(mm) × 페이지수 / 2 (양면 기준)
+            const textThick = (t_um / 1000) * pg / 2;
+
             let spine = 0, joint = 0, error = "";
 
-            if (mode === 'soft') { spine = Math.ceil(textThick + (bMm * 2) + 4); joint = 0; }
-            else if (mode === 'hard') { spine = Math.ceil(textThick + bMm); joint = 11; }
-            else if (mode === 'leather') {
+            if (mode === 'soft') {
+                // 환양장미소: 세네카 = 내지두께 + 합지두께×2 + 미소앞뒤×2
+                spine = textThick + (bMm * 2) + (misoFB * 2);
+                spine = Math.round(spine * 100) / 100;
+                joint = 0;
+            } else if (mode === 'hard') {
+                // 각양장: 세네카 = 내지두께 + 합지두께×2 + 각양장앞뒤×2, 홈 11mm
+                spine = textThick + (bMm * 2) + (gakFB * 2);
+                spine = Math.round(spine * 100) / 100;
+                joint = 11;
+            } else if (mode === 'leather') {
+                // 환양장(인조있음): 합지두께 고려 안함, 홈 8mm
                 joint = 8;
-                if (textThick >= 40) error = "제작불가";
-                else if (textThick >= 35) spine = textThick + 9;
-                else if (textThick >= 25) spine = textThick + 8;
-                else if (textThick >= 15) spine = textThick + 7;
-                else if (textThick >= 10) spine = textThick + 6;
-                else if (textThick >= 1)  spine = textThick + 5;
-                else spine = textThick;
+                if (textThick >= 40) {
+                    error = "제작불가 (페이지수 초과)";
+                } else if (textThick >= 35) { spine = textThick + 9; }
+                else if (textThick >= 25)   { spine = textThick + 8; }
+                else if (textThick >= 15)   { spine = textThick + 7; }
+                else if (textThick >= 10)   { spine = textThick + 6; }
+                else if (textThick >= 1)    { spine = textThick + 5; }
+                else { spine = textThick; }
                 spine = Math.ceil(spine);
             }
 
             const boardW = w - 4;
-            const bleed = 17;
-            const totalW = bleed + boardW + (joint * 2) + (spine || 0) + boardW + bleed;
+            const bleed  = 17;
+            const totalW = bleed + boardW + (joint) + (spine || 0) + (joint) + boardW + bleed;
             const totalH = bleed + h + bleed;
 
             document.getElementById('seneca_result').innerText = error ? "ERR" : (spine || "0.00");
-            document.getElementById('final_formula').innerText = error || `규격: ${totalW} x ${totalH}mm (${bleed}+${boardW}+${joint}+${spine}+${joint}+${boardW}+${bleed})`;
+            document.getElementById('final_formula').innerText = error
+                ? error
+                : `규격: ${totalW} x ${totalH}mm (${bleed}+${boardW}+${joint}+${spine}+${joint}+${boardW}+${bleed})`;
             draw(bleed, boardW, joint, spine, h);
         }
 
@@ -185,11 +205,11 @@
             const cvs = document.getElementById('mainCanvas'), ctx = cvs.getContext('2d');
             ctx.clearRect(0, 0, cvs.width, cvs.height);
             const totalW_v = bleed*2 + board*2 + (joint*2) + (spine || 0);
-            const scale = 700 / Math.max(totalW_v, 300);
-            const drawH = Math.min(120 * (h_val / 210), 160);
-            const bleedH = bleed * scale; 
-            const y_s = (cvs.height - (drawH + bleedH * 2)) / 2 + 10;
-            let x = (cvs.width - (totalW_v * scale)) / 2;
+            const scale    = 700 / Math.max(totalW_v, 300);
+            const drawH    = Math.min(120 * (h_val / 210), 160);
+            const bleedH   = bleed * scale;
+            const y_s      = (cvs.height - (drawH + bleedH * 2)) / 2 + 10;
+            let x          = (cvs.width - (totalW_v * scale)) / 2;
 
             const box = (w, label, color, isB = false) => {
                 const cw = w * scale;
@@ -204,15 +224,15 @@
             };
 
             box(bleed, "여분", "#fee2e2", true); box(board, "보드", "#f1f5f9");
-            if(joint > 0) box(joint, "홈", "#f8fafc");
+            if (joint > 0) box(joint, "홈", "#f8fafc");
             box(spine || 0, "세네카", "#ffffff");
-            if(joint > 0) box(joint, "홈", "#f8fafc");
+            if (joint > 0) box(joint, "홈", "#f8fafc");
             box(board, "보드", "#f1f5f9"); box(bleed, "여분", "#fee2e2", true);
         }
 
         function sortTable(colIdx, type) {
             const tbody = document.querySelector("#resultTable tbody");
-            const rows = Array.from(tbody.querySelectorAll("tr"));
+            const rows  = Array.from(tbody.querySelectorAll("tr"));
             if (currentSortCol === colIdx) isAsc = !isAsc; else { isAsc = true; currentSortCol = colIdx; }
             rows.sort((a, b) => {
                 let vA = a.cells[colIdx].innerText.replace(/,/g, '').trim();
@@ -224,9 +244,9 @@
 
         function handleFavorite(e, btn) {
             e.stopPropagation();
-            const d = btn.closest('tr').dataset;
-            let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
-            const idx = favs.findIndex(f => f.id === d.id);
+            const d    = btn.closest('tr').dataset;
+            let favs   = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            const idx  = favs.findIndex(f => f.id === d.id);
             if (idx > -1) favs.splice(idx, 1);
             else favs.push({ id: d.id, name: d.name, thick: d.thick, gram: d.gram, price: d.price, color: d.color });
             localStorage.setItem('paper_favs', JSON.stringify(favs));
@@ -234,8 +254,8 @@
         }
 
         function renderFavorites() {
-            const bar = document.getElementById('favorites_bar');
-            if(!bar) return;
+            const bar  = document.getElementById('favorites_bar');
+            if (!bar) return;
             const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             bar.innerHTML = favs.map(f => `
                 <div onclick="quickDisplay('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.color}')" class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border-2 rounded-full shadow-sm cursor-pointer hover:border-blue-300">
