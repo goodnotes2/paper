@@ -112,9 +112,13 @@
                                 data-gram="{{ item.평량 }}"
                                 data-price="{{ item.고시가 }}"
                                 data-color="{{ item.색상 }}"
+                                data-size="{{ item.사이즈 }}"
                                 onclick="selectRow(this)">
                                 <td class="p-4 text-center"><button onclick="handleFavorite(event, this)" class="fav-star text-gray-200 text-2xl">★</button></td>
-                                <td class="p-4"><div class="font-bold text-slate-900">{{ item.품목 }}</div><div class="text-[11px] text-slate-400">{{ item.색상 }} | {{ item.시트명 }}</div></td>
+                                <td class="p-4">
+                                    <div class="font-bold text-slate-900">{{ item.품목 }}</div>
+                                    <div class="text-[11px] text-slate-400">{{ item.색상 }} | {{ item.시트명 }} | {{ item.사이즈 }}</div>
+                                </td>
                                 <td class="p-4 text-center font-bold text-slate-600">{{ item.평량 }}</td>
                                 <td class="p-4 text-center font-bold text-blue-600">{{ item.두께 }}μm</td>
                                 <td class="p-4 font-bold text-right">{{ item.고시가 }}</td>
@@ -145,7 +149,7 @@
         function selectRow(el) {
             const d = el.dataset;
             document.getElementById('hidden_thick').value = d.thick;
-            document.getElementById('selected_info').innerText = `${d.name} (${d.gram}g)`;
+            document.getElementById('selected_info').innerText = `${d.name} ${d.gram}g | ${d.size || ''}`;
             document.getElementById('fav_price_display').innerText = `${d.price}원`;
             calc();
         }
@@ -157,26 +161,26 @@
             const t_um   = parseFloat(document.getElementById('hidden_thick').value) || 0;
             const sel    = document.getElementById('board_select');
             const bMm    = parseFloat(sel.value) || 0;
-            const gakFB  = parseFloat(sel.selectedOptions[0]?.dataset.gak) || 0;  // 각양장 앞뒤
-            const misoFB = parseFloat(sel.selectedOptions[0]?.dataset.miso) || 0; // 미소 앞뒤
+            const gakFB  = parseFloat(sel.selectedOptions[0]?.dataset.gak) || 0;
+            const misoFB = parseFloat(sel.selectedOptions[0]?.dataset.miso) || 0;
 
-            // μm → mm, 내지 두께 = 두께(mm) × 페이지수 / 2 (양면 기준)
+            // 순수 내지 두께 (μm → mm, 양면 기준)
             const textThick = (t_um / 1000) * pg / 2;
+
+            // ★ 큰 숫자는 순수 내지 두께만 표시
+            document.getElementById('seneca_result').innerText = t_um > 0 ? textThick.toFixed(2) : "0.00";
 
             let spine = 0, joint = 0, error = "";
 
             if (mode === 'soft') {
-                // 환양장미소: 세네카 = 내지두께 + 합지두께×2 + 미소앞뒤×2
                 spine = textThick + (bMm * 2) + (misoFB * 2);
                 spine = Math.round(spine * 100) / 100;
                 joint = 0;
             } else if (mode === 'hard') {
-                // 각양장: 세네카 = 내지두께 + 합지두께×2 + 각양장앞뒤×2, 홈 11mm
                 spine = textThick + (bMm * 2) + (gakFB * 2);
                 spine = Math.round(spine * 100) / 100;
                 joint = 11;
             } else if (mode === 'leather') {
-                // 환양장(인조있음): 합지두께 고려 안함, 홈 8mm
                 joint = 8;
                 if (textThick >= 40) {
                     error = "제작불가 (페이지수 초과)";
@@ -191,10 +195,9 @@
 
             const boardW = w - 4;
             const bleed  = 17;
-            const totalW = bleed + boardW + (joint) + (spine || 0) + (joint) + boardW + bleed;
+            const totalW = bleed + boardW + joint + (spine || 0) + joint + boardW + bleed;
             const totalH = bleed + h + bleed;
 
-            document.getElementById('seneca_result').innerText = error ? "ERR" : (spine || "0.00");
             document.getElementById('final_formula').innerText = error
                 ? error
                 : `규격: ${totalW} x ${totalH}mm (${bleed}+${boardW}+${joint}+${spine}+${joint}+${boardW}+${bleed})`;
@@ -244,11 +247,11 @@
 
         function handleFavorite(e, btn) {
             e.stopPropagation();
-            const d    = btn.closest('tr').dataset;
-            let favs   = JSON.parse(localStorage.getItem('paper_favs') || '[]');
-            const idx  = favs.findIndex(f => f.id === d.id);
+            const d   = btn.closest('tr').dataset;
+            let favs  = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            const idx = favs.findIndex(f => f.id === d.id);
             if (idx > -1) favs.splice(idx, 1);
-            else favs.push({ id: d.id, name: d.name, thick: d.thick, gram: d.gram, price: d.price, color: d.color });
+            else favs.push({ id: d.id, name: d.name, thick: d.thick, gram: d.gram, price: d.price, color: d.color, size: d.size });
             localStorage.setItem('paper_favs', JSON.stringify(favs));
             renderFavorites();
         }
@@ -258,15 +261,20 @@
             if (!bar) return;
             const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             bar.innerHTML = favs.map(f => `
-                <div onclick="quickDisplay('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.color}')" class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border-2 rounded-full shadow-sm cursor-pointer hover:border-blue-300">
-                    <span class="text-yellow-400 text-xs">★</span><span class="text-[11px] font-bold text-slate-700 whitespace-nowrap">${f.name}</span>
+                <div onclick="quickDisplay('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.color}', '${f.size}')"
+                     class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border-2 rounded-full shadow-sm cursor-pointer hover:border-blue-300">
+                    <span class="text-yellow-400 text-xs">★</span>
+                    <div class="flex flex-col">
+                        <span class="text-[11px] font-bold text-slate-700 whitespace-nowrap">${f.name} ${f.gram}g</span>
+                        <span class="text-[10px] text-slate-400 whitespace-nowrap">${f.color || ''} | ${f.size || ''}</span>
+                    </div>
                 </div>
             `).join('');
         }
 
-        function quickDisplay(thick, name, gram, price, color) {
+        function quickDisplay(thick, name, gram, price, color, size) {
             document.getElementById('hidden_thick').value = thick;
-            document.getElementById('selected_info').innerText = `${name} (${gram}g)`;
+            document.getElementById('selected_info').innerText = `${name} ${gram}g | ${size || ''}`;
             document.getElementById('fav_price_display').innerText = `${price}원`;
             calc();
         }
