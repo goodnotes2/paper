@@ -80,7 +80,8 @@
                         <input type="text" name="keyword" value="{{ keyword }}" placeholder="아코팩 검색..." class="w-full p-4 glass-card shadow-sm outline-none pr-24 border-2 focus:border-blue-500">
                         <button type="submit" class="absolute right-2 top-2 bg-blue-600 text-white px-5 py-2 rounded-xl font-bold">검색</button>
                     </form>
-                    <div id="favorites_bar" class="flex flex-nowrap gap-2 overflow-x-auto pb-2"></div>
+                    <!-- 즐겨찾기: 세로 목록 -->
+                    <div id="favorites_bar" class="flex flex-col gap-2"></div>
                 </div>
             </div>
 
@@ -167,7 +168,7 @@
             // 순수 내지 두께 (μm → mm, 양면 기준)
             const textThick = (t_um / 1000) * pg / 2;
 
-            // ★ 큰 숫자는 순수 내지 두께만 표시
+            // ★ 큰 숫자 = 순수 내지 두께만
             document.getElementById('seneca_result').innerText = t_um > 0 ? textThick.toFixed(2) : "0.00";
 
             let spine = 0, joint = 0, error = "";
@@ -262,12 +263,13 @@
             const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             bar.innerHTML = favs.map(f => `
                 <div onclick="quickDisplay('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.color}', '${f.size}')"
-                     class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border-2 rounded-full shadow-sm cursor-pointer hover:border-blue-300">
-                    <span class="text-yellow-400 text-xs">★</span>
+                     class="flex items-center gap-3 px-4 py-3 bg-white border-2 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300">
+                    <span class="text-yellow-400 text-lg">★</span>
                     <div class="flex flex-col">
-                        <span class="text-[11px] font-bold text-slate-700 whitespace-nowrap">${f.name} ${f.gram}g</span>
-                        <span class="text-[10px] text-slate-400 whitespace-nowrap">${f.color || ''} | ${f.size || ''}</span>
+                        <span class="text-sm font-bold text-slate-700">${f.name} ${f.gram}g</span>
+                        <span class="text-[11px] text-slate-400">${f.color || ''} | ${f.size || ''}</span>
                     </div>
+                    <span class="ml-auto text-sm font-bold text-blue-500">${f.price}원</span>
                 </div>
             `).join('');
         }
