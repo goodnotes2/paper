@@ -46,6 +46,7 @@ def load_data():
                 c_color = next((c for c in df.columns if any(k in c for k in ['색상', '컬러', '패턴'])), None)
                 c_price = next((c for c in df.columns if any(k in c for k in ['고시가', '단가'])), None)
                 c_note  = next((c for c in df.columns if any(k in c for k in ['비고', '메모'])), None)
+                c_size  = next((c for c in df.columns if any(k in c for k in ['사이즈', '규격', '크기'])), None)
 
                 if not c_name:
                     continue
@@ -58,6 +59,7 @@ def load_data():
                 temp_df['품목']   = df[c_name].str.strip()
                 temp_df['색상']   = df[c_color].str.strip() if c_color else ''
                 temp_df['비고']   = df[c_note].str.strip()  if c_note  else ''
+                temp_df['사이즈'] = df[c_size].str.strip()  if c_size  else ''
                 temp_df['평량']   = df[c_gram].str.replace(r'\.0$', '', regex=True) if c_gram else '0'
                 temp_df['두께']   = df[c_thick].apply(extract_num) if c_thick else '0'
                 temp_df['고시가'] = df[c_price].apply(
@@ -65,10 +67,10 @@ def load_data():
                 ) if c_price else '0'
                 temp_df['시트명'] = sheet
 
-                # ✅ 핵심: 품목+색상+비고 전부 합쳐서 검색
-                search_text = (temp_df['품목'] + ' ' + temp_df['색상'] + ' ' + temp_df['비고']).str.lower()
-                temp_df['search_full']    = search_text
-                temp_df['search_nospace'] = search_text.str.replace(' ', '', regex=False)
+                # 모든 컬럼 통합 검색 (아코팩 등 어느 컬럼에 있어도 검색됨)
+                all_text = df.apply(lambda row: ' '.join(row.values), axis=1).str.lower()
+                temp_df['search_full']    = all_text
+                temp_df['search_nospace'] = all_text.str.replace(' ', '', regex=False)
 
                 combined_list.append(temp_df)
 
@@ -130,7 +132,7 @@ def index():
                 s        = item['시트명']
                 base_url = company_urls.get(s, '#')
 
-                # 키워드 검색 연결되는 사이트
+                # 키워드 검색 연결 사이트
                 if s in ['두성', '삼원', '삼화', '서경']:
                     item['url'] = base_url + keyword
                 else:
