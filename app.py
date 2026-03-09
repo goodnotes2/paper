@@ -37,10 +37,15 @@ def load_data():
                     res = re.sub(r'[^0-9.]', '', str(val))
                     return res if res and res != '.' else '0'
 
+                # Series로 확실하게 만들기 (None일 때 빈 Series)
+                품목_s = df[c_name].str.strip()
+                색상_s = df[c_color].str.strip() if c_color else pd.Series([''] * len(df), index=df.index)
+                비고_s = df[c_note].str.strip()  if c_note  else pd.Series([''] * len(df), index=df.index)
+
                 temp_df = pd.DataFrame()
-                temp_df['품목']   = df[c_name].str.strip()
-                temp_df['색상']   = df[c_color].str.strip() if c_color else ''
-                temp_df['비고']   = df[c_note].str.strip()  if c_note  else ''
+                temp_df['품목']   = 품목_s
+                temp_df['색상']   = 색상_s
+                temp_df['비고']   = 비고_s
                 temp_df['평량']   = df[c_gram].str.replace(r'\.0$', '', regex=True) if c_gram else '0'
                 temp_df['두께']   = df[c_thick].apply(extract_num) if c_thick else '0'
                 temp_df['고시가'] = df[c_price].apply(
@@ -52,13 +57,9 @@ def load_data():
                     axis=1
                 )
 
-                # 검색용 전체 텍스트 (품목+색상+비고 합치기, 띄어쓰기 제거 버전도 저장)
-                temp_df['search_full'] = (
-                    temp_df['품목'] + ' ' +
-                    temp_df['색상'] + ' ' +
-                    temp_df['비고']
-                ).str.lower()
-                temp_df['search_nospace'] = temp_df['search_full'].str.replace(' ', '')
+                # 검색용 텍스트 (품목+색상+비고 합치기)
+                temp_df['search_full']    = (품목_s + ' ' + 색상_s + ' ' + 비고_s).str.lower()
+                temp_df['search_nospace'] = temp_df['search_full'].str.replace(' ', '', regex=False)
 
                 combined_list.append(temp_df)
 
@@ -112,8 +113,8 @@ def index():
         k_nospace = k.replace(' ', '')
 
         for item in cached_data:
-            full     = item.get('search_full', '')
-            nospace  = item.get('search_nospace', '')
+            full    = item.get('search_full', '')
+            nospace = item.get('search_nospace', '')
 
             if k in full or k_nospace in nospace:
                 p, s = item['품목'], item['시트명']
