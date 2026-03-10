@@ -40,6 +40,7 @@ def load_data():
                 df = df.fillna('').astype(str)
                 df.columns = [str(col).strip() for col in df.columns]
 
+                # 핵심 컬럼들 찾기
                 c_name  = next((c for c in df.columns if any(k in c for k in ['품목', '품명'])), None)
                 c_thick = next((c for c in df.columns if any(k in c for k in ['두께', 'μm', 'um'])), None)
                 c_gram  = next((c for c in df.columns if any(k in c for k in ['평량', 'g'])), None)
@@ -50,6 +51,12 @@ def load_data():
 
                 if not c_name:
                     continue
+
+                # ✅ ffill 처리 (위 셀 값 채우기)
+                if c_name:  df[c_name]  = df[c_name].fillna(method='ffill')
+                if c_size:  df[c_size]  = df[c_size].fillna(method='ffill')
+                if c_gram:  df[c_gram]  = df[c_gram].fillna(method='ffill')
+                if c_color: df[c_color] = df[c_color].fillna(method='ffill')
 
                 def extract_num(val):
                     res = re.sub(r'[^0-9.]', '', str(val))
@@ -67,7 +74,7 @@ def load_data():
                 ) if c_price else '0'
                 temp_df['시트명'] = sheet
 
-                # 모든 컬럼 통합 검색 (아코팩 등 어느 컬럼에 있어도 검색됨)
+                # ✅ 모든 컬럼 + ffill 후 통합 검색 (띤또레또 확실히 잡음)
                 all_text = df.apply(lambda row: ' '.join(row.values), axis=1).str.lower()
                 temp_df['search_full']    = all_text
                 temp_df['search_nospace'] = all_text.str.replace(' ', '', regex=False)
@@ -80,7 +87,7 @@ def load_data():
         except Exception as e:
             print(f"[ERROR] load_data: {e}")
 
-    # qq.xlsx 로드
+    # qq.xlsx 로드 (생략)
     qq_path = 'qq.xlsx'
     final_boards = []
     if os.path.exists(qq_path):
@@ -132,11 +139,9 @@ def index():
                 s        = item['시트명']
                 base_url = company_urls.get(s, '#')
 
-                # 키워드 검색 연결 사이트
                 if s in ['두성', '삼원', '삼화', '서경']:
                     item['url'] = base_url + keyword
                 else:
-                    # 한국, 무림, 한솔, 전주는 고정 URL
                     item['url'] = base_url
 
                 results.append(item)
