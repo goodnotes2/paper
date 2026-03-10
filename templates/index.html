@@ -12,6 +12,7 @@
         .mode-btn { cursor: pointer; transition: 0.2s; border: 2px solid #e2e8f0; border-radius: 12px; background: white; padding: 15px; text-align: center; }
         .mode-btn.active { border-color: #3b82f6; background-color: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
         .mode-btn.active p { color: rgba(255, 255, 255, 0.8); }
+        .fav-star { color: #d1d5db; }
         .fav-star.active { color: #facc15 !important; }
         th.sortable { cursor: pointer; position: relative; }
         th.sortable:hover { background-color: #f8fafc; }
@@ -80,7 +81,6 @@
                         <input type="text" name="keyword" value="{{ keyword }}" placeholder="아코팩 검색..." class="w-full p-4 glass-card shadow-sm outline-none pr-24 border-2 focus:border-blue-500">
                         <button type="submit" class="absolute right-2 top-2 bg-blue-600 text-white px-5 py-2 rounded-xl font-bold">검색</button>
                     </form>
-                    <!-- 즐겨찾기: 세로 목록 -->
                     <div id="favorites_bar" class="flex flex-col gap-2"></div>
                 </div>
             </div>
@@ -115,7 +115,7 @@
                                 data-color="{{ item.색상 }}"
                                 data-size="{{ item.사이즈 }}"
                                 onclick="selectRow(this)">
-                                <td class="p-4 text-center"><button onclick="handleFavorite(event, this)" class="fav-star text-gray-200 text-2xl">★</button></td>
+                                <td class="p-4 text-center"><button onclick="handleFavorite(event, this)" class="fav-star text-2xl">★</button></td>
                                 <td class="p-4">
                                     <div class="font-bold text-slate-900">{{ item.품목 }}</div>
                                     <div class="text-[11px] text-slate-400">{{ item.색상 }} | {{ item.시트명 }} | {{ item.사이즈 }}</div>
@@ -165,10 +165,7 @@
             const gakFB  = parseFloat(sel.selectedOptions[0]?.dataset.gak) || 0;
             const misoFB = parseFloat(sel.selectedOptions[0]?.dataset.miso) || 0;
 
-            // 순수 내지 두께 (μm → mm, 양면 기준)
             const textThick = (t_um / 1000) * pg / 2;
-
-            // ★ 큰 숫자 = 순수 내지 두께만
             document.getElementById('seneca_result').innerText = t_um > 0 ? textThick.toFixed(2) : "0.00";
 
             let spine = 0, joint = 0, error = "";
@@ -251,8 +248,13 @@
             const d   = btn.closest('tr').dataset;
             let favs  = JSON.parse(localStorage.getItem('paper_favs') || '[]');
             const idx = favs.findIndex(f => f.id === d.id);
-            if (idx > -1) favs.splice(idx, 1);
-            else favs.push({ id: d.id, name: d.name, thick: d.thick, gram: d.gram, price: d.price, color: d.color, size: d.size });
+            if (idx > -1) {
+                favs.splice(idx, 1);
+                btn.classList.remove('active'); // ✅ 별 회색
+            } else {
+                favs.push({ id: d.id, name: d.name, thick: d.thick, gram: d.gram, price: d.price, color: d.color, size: d.size });
+                btn.classList.add('active');    // ✅ 별 노란색
+            }
             localStorage.setItem('paper_favs', JSON.stringify(favs));
             renderFavorites();
         }
@@ -272,6 +274,18 @@
                     <span class="ml-auto text-sm font-bold text-blue-500">${f.price}원</span>
                 </div>
             `).join('');
+
+            // ✅ 테이블 별 노란색 동기화
+            document.querySelectorAll('#resultTable tbody tr').forEach(row => {
+                const starBtn = row.querySelector('.fav-star');
+                if (starBtn) {
+                    if (favs.find(f => f.id === row.dataset.id)) {
+                        starBtn.classList.add('active');
+                    } else {
+                        starBtn.classList.remove('active');
+                    }
+                }
+            });
         }
 
         function quickDisplay(thick, name, gram, price, color, size) {
