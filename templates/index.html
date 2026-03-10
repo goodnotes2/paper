@@ -188,9 +188,15 @@
             const totalW = bleed + boardW + joint + (spine || 0) + joint + boardW + bleed;
             const totalH = bleed + h + bleed;
 
-            document.getElementById('final_formula').innerText = error
-                ? error
-                : `규격: ${totalW} x ${totalH}mm (${bleed}+${boardW}+${joint}+${spine}+${joint}+${boardW}+${bleed})`;
+            if (error) {
+                document.getElementById('final_formula').innerText = error;
+            } else if (mode === 'soft') {
+                document.getElementById('final_formula').innerText =
+                    `규격: ${totalW} x ${totalH}mm (${bleed}+${boardW}+${spine}+${boardW}+${bleed})`;
+            } else {
+                document.getElementById('final_formula').innerText =
+                    `규격: ${totalW} x ${totalH}mm (${bleed}+${boardW}+${joint}+${spine}+${joint}+${boardW}+${bleed})`;
+            }
             draw(bleed, boardW, joint, spine, h);
         }
 
