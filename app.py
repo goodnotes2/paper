@@ -50,13 +50,13 @@ def load_data():
                 if not c_name:
                     continue
 
-                # ✅ 줄바꿈 제거
+                # 줄바꿈 제거
                 df[c_name] = df[c_name].astype(str).str.replace('\n', ' ', regex=False).str.replace('\r', ' ', regex=False)
                 if c_color: df[c_color] = df[c_color].astype(str).str.replace('\n', ' ', regex=False)
                 if c_note:  df[c_note]  = df[c_note].astype(str).str.replace('\n', ' ', regex=False)
                 if c_size:  df[c_size]  = df[c_size].astype(str).str.replace('\n', ' ', regex=False)
 
-                # ✅ ffill (pandas 2.0+ 호환)
+                # ffill (pandas 2.0+ 호환)
                 df[c_name] = df[c_name].replace('nan', pd.NA).ffill().fillna('')
                 if c_size:  df[c_size]  = df[c_size].replace('nan', pd.NA).ffill().fillna('')
                 if c_gram:  df[c_gram]  = df[c_gram].replace('nan', pd.NA).ffill().fillna('')
@@ -132,6 +132,7 @@ def index():
     if keyword:
         k         = keyword.lower()
         k_nospace = k.replace(' ', '')
+        row_counter = 0
 
         for item in cached_data:
             full    = item.get('search_full', '')
@@ -144,6 +145,8 @@ def index():
                     item['url'] = base_url + keyword
                 else:
                     item['url'] = base_url
+                item['row_id'] = row_counter  # ✅ 고유 ID
+                row_counter += 1
                 results.append(item)
 
     return render_template('index.html',
