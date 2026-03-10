@@ -37,7 +37,6 @@ def load_data():
                 except Exception:
                     continue
 
-                df = df.fillna('')
                 df.columns = [str(col).strip() for col in df.columns]
 
                 c_name  = next((c for c in df.columns if any(k in c for k in ['품목', '품명'])), None)
@@ -51,20 +50,17 @@ def load_data():
                 if not c_name:
                     continue
 
-                # ✅ 줄바꿈 제거 + ffill (pandas 2.0+ 호환)
+                # ✅ 줄바꿈 제거
                 df[c_name] = df[c_name].astype(str).str.replace('\n', ' ', regex=False).str.replace('\r', ' ', regex=False)
-                df[c_name] = df[c_name].replace('', pd.NA).ffill().fillna('')
+                if c_color: df[c_color] = df[c_color].astype(str).str.replace('\n', ' ', regex=False)
+                if c_note:  df[c_note]  = df[c_note].astype(str).str.replace('\n', ' ', regex=False)
+                if c_size:  df[c_size]  = df[c_size].astype(str).str.replace('\n', ' ', regex=False)
 
-                if c_color:
-                    df[c_color] = df[c_color].astype(str).str.replace('\n', ' ', regex=False)
-                    df[c_color] = df[c_color].replace('', pd.NA).ffill().fillna('')
-                if c_size:
-                    df[c_size] = df[c_size].astype(str).str.replace('\n', ' ', regex=False)
-                    df[c_size] = df[c_size].replace('', pd.NA).ffill().fillna('')
-                if c_gram:
-                    df[c_gram] = df[c_gram].replace('', pd.NA).ffill().fillna('')
-                if c_note:
-                    df[c_note] = df[c_note].astype(str).str.replace('\n', ' ', regex=False)
+                # ✅ ffill (pandas 2.0+ 호환)
+                df[c_name] = df[c_name].replace('nan', pd.NA).ffill().fillna('')
+                if c_size:  df[c_size]  = df[c_size].replace('nan', pd.NA).ffill().fillna('')
+                if c_gram:  df[c_gram]  = df[c_gram].replace('nan', pd.NA).ffill().fillna('')
+                if c_color: df[c_color] = df[c_color].replace('nan', pd.NA).ffill().fillna('')
 
                 def extract_num(val):
                     res = re.sub(r'[^0-9.]', '', str(val))
@@ -82,7 +78,6 @@ def load_data():
                 ) if c_price else '0'
                 temp_df['시트명'] = sheet
 
-                # 통합 검색 텍스트
                 all_text = (temp_df['품목'] + ' ' + temp_df['색상'] + ' ' + temp_df['비고'] + ' ' + temp_df['사이즈']).str.lower()
                 temp_df['search_full']    = all_text
                 temp_df['search_nospace'] = all_text.str.replace(' ', '', regex=False)
@@ -145,12 +140,10 @@ def index():
             if k in full or k_nospace in nospace:
                 s        = item['시트명']
                 base_url = company_urls.get(s, '#')
-
                 if s in ['두성', '삼원', '삼화', '서경']:
                     item['url'] = base_url + keyword
                 else:
                     item['url'] = base_url
-
                 results.append(item)
 
     return render_template('index.html',
