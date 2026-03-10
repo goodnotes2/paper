@@ -22,10 +22,17 @@ company_urls = {
 }
 
 cached_data = []
-board_data = []
+
+board_data = [
+    {'합지명': '1000g(기본)', '두께': 1.6, '각양장_앞뒤': 3.0,  '미소_앞뒤': 2.0},
+    {'합지명': '1100g',       '두께': 1.6, '각양장_앞뒤': 3.0,  '미소_앞뒤': 2.0},
+    {'합지명': '1200g',       '두께': 1.6, '각양장_앞뒤': 3.5,  '미소_앞뒤': 2.5},
+    {'합지명': '1300g',       '두께': 1.6, '각양장_앞뒤': 4.0,  '미소_앞뒤': 3.0},
+    {'합지명': '1400g',       '두께': 1.6, '각양장_앞뒤': 4.5,  '미소_앞뒤': 3.5},
+]
 
 def load_data():
-    global cached_data, board_data
+    global cached_data
 
     file_path = 'search.xlsx'
     if os.path.exists(file_path):
@@ -50,13 +57,11 @@ def load_data():
                 if not c_name:
                     continue
 
-                # 줄바꿈 제거
-                df[c_name] = df[c_name].astype(str).str.replace('\n', ' ', regex=False).str.replace('\r', ' ', regex=False)
-                if c_color: df[c_color] = df[c_color].astype(str).str.replace('\n', ' ', regex=False)
-                if c_note:  df[c_note]  = df[c_note].astype(str).str.replace('\n', ' ', regex=False)
-                if c_size:  df[c_size]  = df[c_size].astype(str).str.replace('\n', ' ', regex=False)
+                df[c_name] = df[c_name].astype(str).str.replace('\\n', ' ', regex=False).str.replace('\\r', ' ', regex=False)
+                if c_color: df[c_color] = df[c_color].astype(str).str.replace('\\n', ' ', regex=False)
+                if c_note:  df[c_note]  = df[c_note].astype(str).str.replace('\\n', ' ', regex=False)
+                if c_size:  df[c_size]  = df[c_size].astype(str).str.replace('\\n', ' ', regex=False)
 
-                # ffill (pandas 2.0+ 호환)
                 df[c_name] = df[c_name].replace('nan', pd.NA).ffill().fillna('')
                 if c_size:  df[c_size]  = df[c_size].replace('nan', pd.NA).ffill().fillna('')
                 if c_gram:  df[c_gram]  = df[c_gram].replace('nan', pd.NA).ffill().fillna('')
@@ -71,7 +76,7 @@ def load_data():
                 temp_df['색상']   = df[c_color].str.strip() if c_color else ''
                 temp_df['비고']   = df[c_note].str.strip()  if c_note  else ''
                 temp_df['사이즈'] = df[c_size].str.strip()  if c_size  else ''
-                temp_df['평량']   = df[c_gram].astype(str).str.replace(r'\.0$', '', regex=True) if c_gram else '0'
+                temp_df['평량']   = df[c_gram].astype(str).str.replace(r'\\.0$', '', regex=True) if c_gram else '0'
                 temp_df['두께']   = df[c_thick].apply(extract_num) if c_thick else '0'
                 temp_df['고시가'] = df[c_price].apply(
                     lambda x: f"{int(float(extract_num(x))):,}" if float(extract_num(x)) > 0 else "0"
@@ -89,32 +94,6 @@ def load_data():
                 print(f"[INFO] 총 {len(cached_data)}행 로드 완료")
         except Exception as e:
             print(f"[ERROR] load_data: {e}")
-
-    qq_path = 'qq.xlsx'
-    final_boards = []
-    if os.path.exists(qq_path):
-        try:
-            df_qq = pd.read_excel(qq_path).fillna('')
-            for _, row in df_qq.iterrows():
-                name_val = str(row.iloc[0]).strip()
-                num_str = re.sub(r'[^0-9.]', '', str(row.iloc[1]))
-                if name_val and num_str and len(name_val) < 15:
-                    try:
-                        val = float(num_str)
-                        if val > 0:
-                            item = {'합지명': name_val, '두께': val}
-                            if '1000' in name_val:
-                                final_boards.insert(0, item)
-                            else:
-                                final_boards.append(item)
-                    except:
-                        continue
-        except:
-            pass
-
-    if not final_boards or not any('1000' in b['합지명'] for b in final_boards):
-        final_boards.insert(0, {'합지명': '1000g(기본)', '두께': 1.6})
-    board_data = final_boards
 
 load_data()
 
@@ -145,7 +124,7 @@ def index():
                     item['url'] = base_url + keyword
                 else:
                     item['url'] = base_url
-                item['row_id'] = row_counter  # ✅ 고유 ID
+                item['row_id'] = row_counter
                 row_counter += 1
                 results.append(item)
 
