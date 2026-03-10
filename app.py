@@ -51,17 +51,20 @@ def load_data():
                 if not c_name:
                     continue
 
-                # ✅ 줄바꿈 제거 처리
+                # ✅ 줄바꿈 제거 + ffill (pandas 2.0+ 호환)
                 df[c_name] = df[c_name].astype(str).str.replace('\n', ' ', regex=False).str.replace('\r', ' ', regex=False)
-                if c_color: df[c_color] = df[c_color].astype(str).str.replace('\n', ' ', regex=False)
-                if c_note:  df[c_note]  = df[c_note].astype(str).str.replace('\n', ' ', regex=False)
-                if c_size:  df[c_size]  = df[c_size].astype(str).str.replace('\n', ' ', regex=False)
+                df[c_name] = df[c_name].replace('', pd.NA).ffill().fillna('')
 
-                # ffill 처리
-                df[c_name] = df[c_name].fillna(method='ffill')
-                if c_size:  df[c_size]  = df[c_size].fillna(method='ffill')
-                if c_gram:  df[c_gram]  = df[c_gram].fillna(method='ffill')
-                if c_color: df[c_color] = df[c_color].fillna(method='ffill')
+                if c_color:
+                    df[c_color] = df[c_color].astype(str).str.replace('\n', ' ', regex=False)
+                    df[c_color] = df[c_color].replace('', pd.NA).ffill().fillna('')
+                if c_size:
+                    df[c_size] = df[c_size].astype(str).str.replace('\n', ' ', regex=False)
+                    df[c_size] = df[c_size].replace('', pd.NA).ffill().fillna('')
+                if c_gram:
+                    df[c_gram] = df[c_gram].replace('', pd.NA).ffill().fillna('')
+                if c_note:
+                    df[c_note] = df[c_note].astype(str).str.replace('\n', ' ', regex=False)
 
                 def extract_num(val):
                     res = re.sub(r'[^0-9.]', '', str(val))
@@ -79,7 +82,7 @@ def load_data():
                 ) if c_price else '0'
                 temp_df['시트명'] = sheet
 
-                # 모든 컬럼 통합 검색
+                # 통합 검색 텍스트
                 all_text = (temp_df['품목'] + ' ' + temp_df['색상'] + ' ' + temp_df['비고'] + ' ' + temp_df['사이즈']).str.lower()
                 temp_df['search_full']    = all_text
                 temp_df['search_nospace'] = all_text.str.replace(' ', '', regex=False)
