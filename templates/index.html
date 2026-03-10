@@ -261,10 +261,20 @@
             const bar  = document.getElementById('favorites_bar');
             if (!bar) return;
             const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
-            bar.innerHTML = favs.map(f => `
+
+            const clearBtn = favs.length > 0
+                ? `<div class="flex justify-end">
+                       <button onclick="clearAllFavorites()"
+                           class="text-xs text-red-400 hover:text-red-600 font-bold px-3 py-1 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 transition">
+                           🗑 전체 삭제
+                       </button>
+                   </div>`
+                : '';
+
+            bar.innerHTML = clearBtn + favs.map(f => `
                 <div onclick="quickDisplay('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.color}', '${f.size}')"
                      class="flex items-center gap-3 px-4 py-3 bg-white border-2 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300">
-                    <span class="text-yellow-400 text-lg">★</span>
+                    <span class="text-yellow-400 text-lg" onclick="removeFavoriteFromBar(event, '${f.id}')">★</span>
                     <div class="flex flex-col">
                         <span class="text-sm font-bold text-slate-700">${f.name} ${f.gram}g</span>
                         <span class="text-[11px] text-slate-400">${f.color || ''} | ${f.size || ''}</span>
@@ -283,6 +293,20 @@
                     }
                 }
             });
+        }
+
+        function removeFavoriteFromBar(e, id) {
+            e.stopPropagation();
+            let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            favs = favs.filter(f => f.id !== id);
+            localStorage.setItem('paper_favs', JSON.stringify(favs));
+            renderFavorites();
+        }
+
+        function clearAllFavorites() {
+            if (!confirm('즐겨찾기를 전체 삭제할까요?')) return;
+            localStorage.removeItem('paper_favs');
+            renderFavorites();
         }
 
         function quickDisplay(thick, name, gram, price, color, size) {
