@@ -185,17 +185,18 @@
 
             const boardW = w - 4;
             const bleed  = 17;
+            const innerH = h + 7;
             const totalW = bleed + boardW + joint + (spine || 0) + joint + boardW + bleed;
-            const totalH = bleed + h + bleed;
+            const totalH = bleed + innerH + bleed;
 
             if (error) {
                 document.getElementById('final_formula').innerText = error;
             } else if (mode === 'soft') {
                 document.getElementById('final_formula').innerText =
-                    `규격: ${totalW} x ${totalH}mm (${bleed}+${boardW}+${spine}+${boardW}+${bleed})`;
+                    `규격 : ${totalW} × ${totalH}mm  (가로: ${bleed}+${boardW}+${spine}+${boardW}+${bleed} / 세로: ${bleed}+${innerH}+${bleed})`;
             } else {
                 document.getElementById('final_formula').innerText =
-                    `규격: ${totalW} x ${totalH}mm (${bleed}+${boardW}+${joint}+${spine}+${joint}+${boardW}+${bleed})`;
+                    `규격 : ${totalW} × ${totalH}mm  (가로: ${bleed}+${boardW}+${joint}+${spine}+${joint}+${boardW}+${bleed} / 세로: ${bleed}+${innerH}+${bleed})`;
             }
             draw(bleed, boardW, joint, spine, h);
         }
