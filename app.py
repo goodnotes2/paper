@@ -24,16 +24,16 @@ company_urls = {
 cached_data = []
 
 board_data = [
-    {'합지명': '1000g(기본)', '두께': 1.6, '각양장_앞뒤': 3.0,  '미소_앞뒤': 2.0},
-    {'합지명': '1100g',       '두께': 1.6, '각양장_앞뒤': 3.0,  '미소_앞뒤': 2.0},
-    {'합지명': '1200g',       '두께': 1.6, '각양장_앞뒤': 3.5,  '미소_앞뒤': 2.5},
-    {'합지명': '1300g',       '두께': 1.6, '각양장_앞뒤': 4.0,  '미소_앞뒤': 3.0},
-    {'합지명': '1400g',       '두께': 1.6, '각양장_앞뒤': 4.5,  '미소_앞뒤': 3.5},
+    {'합지명': '1000g(기본)', '두께': 1.6, '각양장_앞뒤': 3.0, '미소_앞뒤': 2.0, 'bleed': 17},
+    {'합지명': '1100g',       '두께': 1.6, '각양장_앞뒤': 3.0, '미소_앞뒤': 2.0, 'bleed': 17},
+    {'합지명': '1200g',       '두께': 1.6, '각양장_앞뒤': 3.5, '미소_앞뒤': 2.5, 'bleed': 17},
+    {'합지명': '1300g',       '두께': 1.6, '각양장_앞뒤': 4.0, '미소_앞뒤': 3.0, 'bleed': 18},
+    {'합지명': '1400g',       '두께': 1.6, '각양장_앞뒤': 4.5, '미소_앞뒤': 3.5, 'bleed': 18},
+    {'합지명': '1500g',       '두께': 1.6, '각양장_앞뒤': 5.0, '미소_앞뒤': 4.0, 'bleed': 18},
 ]
 
 def load_data():
     global cached_data
-
     file_path = 'search.xlsx'
     if os.path.exists(file_path):
         try:
@@ -72,12 +72,12 @@ def load_data():
                     return res if res and res != '.' else '0'
 
                 temp_df = pd.DataFrame(index=df.index)
-                temp_df['품목']   = df[c_name].str.strip()
-                temp_df['색상']   = df[c_color].str.strip() if c_color else ''
-                temp_df['비고']   = df[c_note].str.strip()  if c_note  else ''
+                temp_df['품목']  = df[c_name].str.strip()
+                temp_df['색상']  = df[c_color].str.strip() if c_color else ''
+                temp_df['비고']  = df[c_note].str.strip()  if c_note  else ''
                 temp_df['사이즈'] = df[c_size].str.strip()  if c_size  else ''
-                temp_df['평량']   = df[c_gram].astype(str).str.replace(r'\\.0$', '', regex=True) if c_gram else '0'
-                temp_df['두께']   = df[c_thick].apply(extract_num) if c_thick else '0'
+                temp_df['평량']  = df[c_gram].astype(str).str.replace(r'\.0$', '', regex=True) if c_gram else '0'
+                temp_df['두께']  = df[c_thick].apply(extract_num) if c_thick else '0'
                 temp_df['고시가'] = df[c_price].apply(
                     lambda x: f"{int(float(extract_num(x))):,}" if float(extract_num(x)) > 0 else "0"
                 ) if c_price else '0'
@@ -109,7 +109,7 @@ def index():
     results = []
 
     if keyword:
-        k         = keyword.lower()
+        k = keyword.lower()
         k_nospace = k.replace(' ', '')
         row_counter = 0
 
@@ -118,7 +118,7 @@ def index():
             nospace = item.get('search_nospace', '')
 
             if k in full or k_nospace in nospace:
-                s        = item['시트명']
+                s = item['시트명']
                 base_url = company_urls.get(s, '#')
                 if s in ['두성', '삼원', '삼화', '서경']:
                     item['url'] = base_url + keyword

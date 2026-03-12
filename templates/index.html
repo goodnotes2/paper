@@ -62,6 +62,7 @@
                                 <option value="{{ b.두께 }}"
                                         data-gak="{{ b.각양장_앞뒤 }}"
                                         data-miso="{{ b.미소_앞뒤 }}"
+                                        data-bleed="{{ b.bleed }}"
                                         class="text-slate-900">{{ b.합지명 }}</option>
                                 {% endfor %}
                             </select>
@@ -159,6 +160,7 @@
             const sel    = document.getElementById('board_select');
             const gakFB  = parseFloat(sel.selectedOptions[0]?.dataset.gak) || 0;
             const misoFB = parseFloat(sel.selectedOptions[0]?.dataset.miso) || 0;
+            const bleed  = parseFloat(sel.selectedOptions[0]?.dataset.bleed) || 17;
 
             const textThick = (t_um / 1000) * pg / 2;
             document.getElementById('seneca_result').innerText = t_um > 0 ? Math.ceil(textThick) : "0";
@@ -184,7 +186,6 @@
             }
 
             const boardW = w - 4;
-            const bleed  = 17;
             const innerH = h + 7;
             const totalW = bleed + boardW + joint + (spine || 0) + joint + boardW + bleed;
             const totalH = bleed + innerH + bleed;
