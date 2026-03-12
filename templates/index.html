@@ -206,7 +206,7 @@
             const cvs = document.getElementById('mainCanvas'), ctx = cvs.getContext('2d');
             ctx.clearRect(0, 0, cvs.width, cvs.height);
             const totalW_v = bleed*2 + board*2 + (joint*2) + (spine || 0);
-            const scale    = 700 / Math.max(totalW_v, 300);
+            const scale    = (cvs.width - 80) / Math.max(totalW_v, 300);
             const drawH    = Math.min(120 * (h_val / 210), 160);
             const bleedH   = bleed * scale;
             const y_s      = (cvs.height - (drawH + bleedH * 2)) / 2 + 10;
