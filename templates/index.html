@@ -63,6 +63,7 @@
 
         .table-wrap {
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .price-cell {
@@ -70,7 +71,14 @@
         }
 
         .result-table {
-            min-width: 1180px;
+            min-width: 1080px;
+            table-layout: fixed;
+        }
+
+        .cell-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -178,9 +186,20 @@
                 <div class="glass-card overflow-hidden">
                     <div class="table-wrap">
                         <table class="w-full text-left text-sm result-table" id="resultTable">
+                            <colgroup>
+                                <col style="width:56px;">
+                                <col style="width:220px;">
+                                <col style="width:130px;">
+                                <col style="width:90px;">
+                                <col style="width:160px;">
+                                <col style="width:90px;">
+                                <col style="width:130px;">
+                                <col style="width:120px;">
+                                <col style="width:84px;">
+                            </colgroup>
                             <thead class="bg-slate-50 border-b text-[11px] text-slate-500 font-bold">
                                 <tr>
-                                    <th class="p-4 text-center w-[56px]">⭐</th>
+                                    <th class="p-4 text-center">⭐</th>
                                     <th class="p-4 sortable whitespace-nowrap" onclick="sortTable(1, 'str')">품목</th>
                                     <th class="p-4 sortable whitespace-nowrap text-center" onclick="sortTable(2, 'str')">사이즈</th>
                                     <th class="p-4 text-center sortable whitespace-nowrap" onclick="sortTable(3, 'num')">평량(g)</th>
@@ -205,15 +224,23 @@
                                     <td class="p-4 text-center">
                                         <button onclick="handleFavorite(event, this)" class="fav-star text-2xl">★</button>
                                     </td>
-                                    <td class="p-4 font-bold text-slate-900 whitespace-nowrap">{{ item.품목 }}</td>
+                                    <td class="p-4 font-bold text-slate-900">
+                                        <div class="cell-truncate">{{ item.품목 }}</div>
+                                    </td>
                                     <td class="p-4 text-center text-slate-600 whitespace-nowrap">{{ item.사이즈 }}</td>
                                     <td class="p-4 text-center font-bold text-slate-600 whitespace-nowrap">{{ item.평량 }}</td>
-                                    <td class="p-4 text-center text-slate-600 whitespace-nowrap">{{ item.색상 }}</td>
+                                    <td class="p-4 text-center text-slate-600">
+                                        <div class="cell-truncate">{{ item.색상 }}</div>
+                                    </td>
                                     <td class="p-4 text-center font-bold text-blue-600 whitespace-nowrap">{{ item.두께 }}μm</td>
                                     <td class="p-4 text-right font-bold price-cell whitespace-nowrap">{{ item.고시가 }}</td>
                                     <td class="p-4 text-center text-slate-500 whitespace-nowrap">{{ item.시트명 }}</td>
                                     <td class="p-4 text-center">
-                                        <a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center justify-center w-9 h-9 bg-slate-100 rounded-xl text-blue-600 hover:bg-blue-100">🔗</a>
+                                        <a href="{{ item.url }}"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           onclick="event.stopPropagation()"
+                                           class="inline-flex items-center justify-center w-9 h-9 bg-slate-100 rounded-xl text-blue-600 hover:bg-blue-100">🔗</a>
                                     </td>
                                 </tr>
                                 {% endfor %}
