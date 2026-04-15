@@ -76,14 +76,40 @@
             white-space: nowrap;
         }
 
-        .fav-list-inline {
+        .fav-list-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
             gap: 10px;
         }
 
-        .fav-item-inline {
+        .fav-item-card {
             min-width: 0;
+        }
+
+        .fav-text-wrap {
+            min-width: 0;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            word-break: break-word;
+            line-height: 1.35;
+        }
+
+        .results-zone {
+            width: 100%;
+        }
+
+        .results-zone > .glass-card {
+            width: 100%;
+        }
+
+        @media (min-width: 1280px) {
+            .main-layout {
+                display: grid;
+                grid-template-columns: 320px minmax(0, 1fr);
+                gap: 16px;
+                align-items: start;
+            }
         }
     </style>
 </head>
@@ -103,7 +129,7 @@
     </div>
     {% else %}
 
-    <div class="max-w-7xl mx-auto space-y-4">
+    <div class="max-w-[1700px] mx-auto space-y-4">
         <div class="grid grid-cols-3 gap-3">
             <div class="mode-btn active" id="btn-soft" onclick="setMode('soft')">
                 <p class="font-bold text-sm md:text-base">환양장미소(인조없음)</p>
@@ -116,7 +142,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)] gap-4 items-start">
+        <div class="main-layout">
             <div class="space-y-4">
                 <div class="p-6 glass-card bg-slate-950 text-white">
                     <div class="flex justify-between items-end mb-6">
@@ -165,7 +191,7 @@
                 </div>
             </div>
 
-            <div class="space-y-4">
+            <div class="results-zone space-y-4">
                 <div class="glass-card p-4 md:p-5 text-center bg-white">
                     <canvas id="mainCanvas" style="width:100%; height:300px;"></canvas>
                     <div id="final_formula"
@@ -192,14 +218,14 @@
                     <table class="w-full text-left text-sm result-table" id="resultTable">
                         <colgroup>
                             <col style="width:5%;">
-                            <col style="width:19%;">
+                            <col style="width:18%;">
                             <col style="width:14%;">
-                            <col style="width:10%;">
-                            <col style="width:17%;">
                             <col style="width:9%;">
-                            <col style="width:14%;">
+                            <col style="width:18%;">
+                            <col style="width:9%;">
+                            <col style="width:13%;">
                             <col style="width:8%;">
-                            <col style="width:4%;">
+                            <col style="width:6%;">
                         </colgroup>
                         <thead class="bg-slate-50 border-b text-[11px] text-slate-500 font-bold">
                             <tr>
@@ -428,17 +454,17 @@
                 : '<div class="text-xs font-bold text-slate-400">즐겨찾기 목록</div>';
 
             bar.innerHTML = clearBtn + `
-                <div class="fav-list-inline">
+                <div class="fav-list-grid">
                     ${favs.map(f => `
                         <div onclick="quickDisplay('${f.thick}', '${escapeQuotes(f.name)}', '${f.gram}', '${f.price}', '${escapeQuotes(f.size || '')}')"
-                             class="fav-item-inline group flex items-center gap-3 px-4 py-3 bg-white border-2 border-slate-100 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300 transition-all">
-                            <span class="text-yellow-400 text-lg hover:scale-120 transition-transform" 
+                             class="fav-item-card group flex items-start gap-3 px-4 py-3 bg-white border-2 border-slate-100 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300 transition-all">
+                            <span class="text-yellow-400 text-lg shrink-0 hover:scale-120 transition-transform"
                                   onclick="removeFavoriteById(event, '${f.id}')">★</span>
-                            <div class="flex flex-col min-w-0">
-                                <span class="text-sm font-bold text-slate-700 truncate">${f.name} ${f.gram}g</span>
-                                <span class="text-[11px] text-slate-400 truncate">${f.color || ''} | ${f.size || ''}</span>
+                            <div class="flex flex-col min-w-0 flex-1">
+                                <span class="text-sm font-bold text-slate-700 fav-text-wrap">${f.name} ${f.gram}g</span>
+                                <span class="text-[11px] text-slate-400 fav-text-wrap">${f.color || ''} | ${f.size || ''}</span>
                             </div>
-                            <span class="ml-auto text-sm font-bold text-blue-500 whitespace-nowrap">${f.price}원</span>
+                            <span class="text-sm font-bold text-blue-500 whitespace-nowrap shrink-0">${f.price}원</span>
                         </div>
                     `).join('')}
                 </div>
