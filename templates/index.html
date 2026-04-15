@@ -61,17 +61,12 @@
             background-color: #f8fafc;
         }
 
-        .table-wrap {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
         .price-cell {
             white-space: nowrap;
         }
 
         .result-table {
-            min-width: 1080px;
+            width: 100%;
             table-layout: fixed;
         }
 
@@ -79,6 +74,16 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+
+        .fav-list-inline {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+        }
+
+        .fav-item-inline {
+            min-width: 0;
         }
     </style>
 </head>
@@ -111,7 +116,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-[380px_minmax(0,1fr)] gap-4 items-start">
+        <div class="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)] gap-4 items-start">
             <div class="space-y-4">
                 <div class="p-6 glass-card bg-slate-950 text-white">
                     <div class="flex justify-between items-end mb-6">
@@ -158,8 +163,6 @@
                         <input type="hidden" id="hidden_thick" value="0">
                     </div>
                 </div>
-
-                <div id="favorites_bar" class="flex flex-col gap-2"></div>
             </div>
 
             <div class="space-y-4">
@@ -182,71 +185,75 @@
                     </form>
                 </div>
 
+                <div id="favorites_bar" class="glass-card p-4"></div>
+
                 {% if results %}
                 <div class="glass-card overflow-hidden">
-                    <div class="table-wrap">
-                        <table class="w-full text-left text-sm result-table" id="resultTable">
-                            <colgroup>
-                                <col style="width:56px;">
-                                <col style="width:220px;">
-                                <col style="width:130px;">
-                                <col style="width:90px;">
-                                <col style="width:160px;">
-                                <col style="width:90px;">
-                                <col style="width:130px;">
-                                <col style="width:120px;">
-                                <col style="width:84px;">
-                            </colgroup>
-                            <thead class="bg-slate-50 border-b text-[11px] text-slate-500 font-bold">
-                                <tr>
-                                    <th class="p-4 text-center">⭐</th>
-                                    <th class="p-4 sortable whitespace-nowrap" onclick="sortTable(1, 'str')">품목</th>
-                                    <th class="p-4 sortable whitespace-nowrap text-center" onclick="sortTable(2, 'str')">사이즈</th>
-                                    <th class="p-4 text-center sortable whitespace-nowrap" onclick="sortTable(3, 'num')">평량(g)</th>
-                                    <th class="p-4 sortable whitespace-nowrap text-center" onclick="sortTable(4, 'str')">색상 및 패턴</th>
-                                    <th class="p-4 text-center sortable whitespace-nowrap" onclick="sortTable(5, 'num')">두께</th>
-                                    <th class="p-4 text-right sortable whitespace-nowrap" onclick="sortTable(6, 'num')">고시가</th>
-                                    <th class="p-4 sortable whitespace-nowrap text-center" onclick="sortTable(7, 'str')">시트명</th>
-                                    <th class="p-4 text-center whitespace-nowrap">링크</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-200 bg-white">
-                                {% for item in results %}
-                                <tr class="hover:bg-blue-50 cursor-pointer"
-                                    data-id="{{ item.품목 }}_{{ item.평량 }}_{{ item.색상 }}_{{ item.두께 }}_{{ item.사이즈 }}"
-                                    data-name="{{ item.품목 }}"
-                                    data-thick="{{ item.두께 }}"
-                                    data-gram="{{ item.평량 }}"
-                                    data-price="{{ item.고시가 }}"
-                                    data-color="{{ item.색상 }}"
-                                    data-size="{{ item.사이즈 }}"
-                                    onclick="selectRow(this)">
-                                    <td class="p-4 text-center">
-                                        <button onclick="handleFavorite(event, this)" class="fav-star text-2xl">★</button>
-                                    </td>
-                                    <td class="p-4 font-bold text-slate-900">
-                                        <div class="cell-truncate">{{ item.품목 }}</div>
-                                    </td>
-                                    <td class="p-4 text-center text-slate-600 whitespace-nowrap">{{ item.사이즈 }}</td>
-                                    <td class="p-4 text-center font-bold text-slate-600 whitespace-nowrap">{{ item.평량 }}</td>
-                                    <td class="p-4 text-center text-slate-600">
-                                        <div class="cell-truncate">{{ item.색상 }}</div>
-                                    </td>
-                                    <td class="p-4 text-center font-bold text-blue-600 whitespace-nowrap">{{ item.두께 }}μm</td>
-                                    <td class="p-4 text-right font-bold price-cell whitespace-nowrap">{{ item.고시가 }}</td>
-                                    <td class="p-4 text-center text-slate-500 whitespace-nowrap">{{ item.시트명 }}</td>
-                                    <td class="p-4 text-center">
-                                        <a href="{{ item.url }}"
-                                           target="_blank"
-                                           rel="noopener noreferrer"
-                                           onclick="event.stopPropagation()"
-                                           class="inline-flex items-center justify-center w-9 h-9 bg-slate-100 rounded-xl text-blue-600 hover:bg-blue-100">🔗</a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    <table class="w-full text-left text-sm result-table" id="resultTable">
+                        <colgroup>
+                            <col style="width:5%;">
+                            <col style="width:19%;">
+                            <col style="width:14%;">
+                            <col style="width:10%;">
+                            <col style="width:17%;">
+                            <col style="width:9%;">
+                            <col style="width:14%;">
+                            <col style="width:8%;">
+                            <col style="width:4%;">
+                        </colgroup>
+                        <thead class="bg-slate-50 border-b text-[11px] text-slate-500 font-bold">
+                            <tr>
+                                <th class="p-3 text-center">⭐</th>
+                                <th class="p-3 sortable whitespace-nowrap" onclick="sortTable(1, 'str')">품목</th>
+                                <th class="p-3 sortable whitespace-nowrap text-center" onclick="sortTable(2, 'str')">사이즈</th>
+                                <th class="p-3 text-center sortable whitespace-nowrap" onclick="sortTable(3, 'num')">평량(g)</th>
+                                <th class="p-3 sortable whitespace-nowrap text-center" onclick="sortTable(4, 'str')">색상 및 패턴</th>
+                                <th class="p-3 text-center sortable whitespace-nowrap" onclick="sortTable(5, 'num')">두께</th>
+                                <th class="p-3 text-right sortable whitespace-nowrap" onclick="sortTable(6, 'num')">고시가</th>
+                                <th class="p-3 sortable whitespace-nowrap text-center" onclick="sortTable(7, 'str')">시트명</th>
+                                <th class="p-3 text-center whitespace-nowrap">링크</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 bg-white">
+                            {% for item in results %}
+                            <tr class="hover:bg-blue-50 cursor-pointer"
+                                data-id="{{ item.품목 }}_{{ item.평량 }}_{{ item.색상 }}_{{ item.두께 }}_{{ item.사이즈 }}"
+                                data-name="{{ item.품목 }}"
+                                data-thick="{{ item.두께 }}"
+                                data-gram="{{ item.평량 }}"
+                                data-price="{{ item.고시가 }}"
+                                data-color="{{ item.색상 }}"
+                                data-size="{{ item.사이즈 }}"
+                                onclick="selectRow(this)">
+                                <td class="p-3 text-center">
+                                    <button onclick="handleFavorite(event, this)" class="fav-star text-xl">★</button>
+                                </td>
+                                <td class="p-3 font-bold text-slate-900">
+                                    <div class="cell-truncate">{{ item.품목 }}</div>
+                                </td>
+                                <td class="p-3 text-center text-slate-600 whitespace-nowrap">
+                                    <div class="cell-truncate">{{ item.사이즈 }}</div>
+                                </td>
+                                <td class="p-3 text-center font-bold text-slate-600 whitespace-nowrap">{{ item.평량 }}</td>
+                                <td class="p-3 text-center text-slate-600">
+                                    <div class="cell-truncate">{{ item.색상 }}</div>
+                                </td>
+                                <td class="p-3 text-center font-bold text-blue-600 whitespace-nowrap">{{ item.두께 }}μm</td>
+                                <td class="p-3 text-right font-bold price-cell whitespace-nowrap">{{ item.고시가 }}</td>
+                                <td class="p-3 text-center text-slate-500 whitespace-nowrap">
+                                    <div class="cell-truncate">{{ item.시트명 }}</div>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <a href="{{ item.url }}"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       onclick="event.stopPropagation()"
+                                       class="inline-flex items-center justify-center w-8 h-8 bg-slate-100 rounded-lg text-blue-600 hover:bg-blue-100">🔗</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
                 {% endif %}
             </div>
@@ -414,24 +421,28 @@
             const favs = getCurrentFavorites();
 
             const clearBtn = favs.length > 0
-                ? `<div class="flex justify-between items-center mb-1">
+                ? `<div class="flex justify-between items-center mb-3">
                        <span class="text-xs font-bold text-slate-400">즐겨찾기 목록</span>
                        <button onclick="clearAllFavorites()" class="text-[10px] text-red-400 hover:underline">모두 삭제</button>
                    </div>`
-                : '';
+                : '<div class="text-xs font-bold text-slate-400">즐겨찾기 목록</div>';
 
-            bar.innerHTML = clearBtn + favs.map(f => `
-                <div onclick="quickDisplay('${f.thick}', '${escapeQuotes(f.name)}', '${f.gram}', '${f.price}', '${escapeQuotes(f.size || '')}')"
-                     class="group flex items-center gap-3 px-4 py-3 bg-white border-2 border-transparent rounded-2xl shadow-sm cursor-pointer hover:border-blue-300 transition-all">
-                    <span class="text-yellow-400 text-lg hover:scale-120 transition-transform" 
-                          onclick="removeFavoriteById(event, '${f.id}')">★</span>
-                    <div class="flex flex-col min-w-0">
-                        <span class="text-sm font-bold text-slate-700 truncate">${f.name} ${f.gram}g</span>
-                        <span class="text-[11px] text-slate-400 truncate">${f.color || ''} | ${f.size || ''}</span>
-                    </div>
-                    <span class="ml-auto text-sm font-bold text-blue-500">${f.price}원</span>
+            bar.innerHTML = clearBtn + `
+                <div class="fav-list-inline">
+                    ${favs.map(f => `
+                        <div onclick="quickDisplay('${f.thick}', '${escapeQuotes(f.name)}', '${f.gram}', '${f.price}', '${escapeQuotes(f.size || '')}')"
+                             class="fav-item-inline group flex items-center gap-3 px-4 py-3 bg-white border-2 border-slate-100 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300 transition-all">
+                            <span class="text-yellow-400 text-lg hover:scale-120 transition-transform" 
+                                  onclick="removeFavoriteById(event, '${f.id}')">★</span>
+                            <div class="flex flex-col min-w-0">
+                                <span class="text-sm font-bold text-slate-700 truncate">${f.name} ${f.gram}g</span>
+                                <span class="text-[11px] text-slate-400 truncate">${f.color || ''} | ${f.size || ''}</span>
+                            </div>
+                            <span class="ml-auto text-sm font-bold text-blue-500 whitespace-nowrap">${f.price}원</span>
+                        </div>
+                    `).join('')}
                 </div>
-            `).join('');
+            `;
 
             document.querySelectorAll('#resultTable tbody tr').forEach(row => {
                 const starBtn = row.querySelector('.fav-star');
