@@ -3,28 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAPER PRO V20</title>
+    <title>PAPER PRO V20 - Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'IBM Plex Sans KR', sans-serif; background-color: #f1f5f9; }
-        .glass-card { background: white; border-radius: 1rem; border: 1px solid #e2e8f0; }
-        .mode-btn { cursor: pointer; transition: 0.2s; border: 2px solid #e2e8f0; border-radius: 12px; background: white; padding: 15px; text-align: center; }
-        .mode-btn.active { border-color: #3b82f6; background-color: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
-        .fav-star { color: #d1d5db; }
-        .fav-star.active { color: #facc15 !important; }
-        th.sortable { cursor: pointer; position: relative; }
-        th.sortable:hover { background-color: #f8fafc; }
+        body {
+            font-family: 'IBM Plex Sans KR', sans-serif;
+            background: #f3f6fb;
+            color: #0f172a;
+        }
+
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+        }
+
+        .mode-btn {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #dbe3ee;
+            border-radius: 16px;
+            background: #ffffff;
+            padding: 16px 14px;
+            text-align: center;
+            box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+        }
+
+        .mode-btn.active {
+            border-color: #3b82f6;
+            background: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22);
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .fav-star {
+            color: #cbd5e1;
+            transition: color 0.2s;
+        }
+
+        .fav-star.active {
+            color: #facc15 !important;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        th.sortable:hover {
+            background-color: #f8fafc;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        .price-cell {
+            white-space: nowrap;
+        }
     </style>
 </head>
-<body class="p-3 md:p-6">
+<body class="min-h-screen p-3 md:p-6">
 
     {% if not authenticated %}
-    <div class="max-w-md mx-auto mt-20 p-8 glass-card shadow-xl text-center">
-        <h2 class="text-xl font-bold mb-6">보안 접속</h2>
+    <div class="max-w-md mx-auto mt-20 p-8 glass-card text-center">
+        <h2 class="text-2xl md:text-3xl font-bold text-slate-800 mb-6">보안 접속</h2>
         <form method="POST" class="space-y-4">
-            <input type="password" name="password" placeholder="비밀번호 입력" class="w-full p-4 border rounded-xl text-center outline-none focus:border-blue-500" autofocus>
-            <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold">확인</button>
+            <input type="password" name="password" placeholder="비밀번호 입력"
+                   class="w-full p-4 border border-slate-300 rounded-2xl text-center outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" autofocus>
+            <button type="submit"
+                    class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-lg hover:bg-blue-700 transition">
+                확인
+            </button>
         </form>
     </div>
     {% else %}
@@ -42,35 +99,38 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-[390px_minmax(0,1fr)] gap-4 items-start">
-            
-            <!-- 왼쪽 영역 -->
+        <div class="grid grid-cols-1 xl:grid-cols-[380px_minmax(0,1fr)] gap-4 items-start">
             <div class="space-y-4">
-                <div class="p-6 glass-card bg-slate-900 text-white shadow-lg">
+                <div class="p-6 glass-card bg-slate-950 text-white">
                     <div class="flex justify-between items-end mb-6">
-                        <span class="text-xs font-bold text-blue-300">SPINE THICKNESS</span>
+                        <span class="text-xs font-bold tracking-[0.2em] text-blue-300">SPINE THICKNESS</span>
                         <span id="seneca_result" class="text-5xl font-light font-mono text-blue-400">0</span>
                     </div>
+
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="text-[11px] text-gray-400">가로(W)</label>
-                                <input type="number" id="bookW" value="148" oninput="calc()" class="w-full p-3 bg-white/10 rounded-xl text-sm outline-none">
+                                <label class="text-[11px] text-slate-400">가로(W)</label>
+                                <input type="number" id="bookW" value="148" oninput="calc()"
+                                       class="w-full p-3 bg-white/10 rounded-2xl text-sm outline-none border border-white/10 focus:border-blue-400">
                             </div>
                             <div>
-                                <label class="text-[11px] text-gray-400">세로(H)</label>
-                                <input type="number" id="bookH" value="210" oninput="calc()" class="w-full p-3 bg-white/10 rounded-xl text-sm outline-none">
+                                <label class="text-[11px] text-slate-400">세로(H)</label>
+                                <input type="number" id="bookH" value="210" oninput="calc()"
+                                       class="w-full p-3 bg-white/10 rounded-2xl text-sm outline-none border border-white/10 focus:border-blue-400">
                             </div>
                         </div>
 
                         <div>
-                            <label class="text-[11px] text-gray-400">페이지수(P)</label>
-                            <input type="number" id="page_input" value="200" oninput="calc()" class="w-full p-4 rounded-xl text-black font-bold outline-none text-lg">
+                            <label class="text-[11px] text-slate-400">페이지수(P)</label>
+                            <input type="number" id="page_input" value="200" oninput="calc()"
+                                   class="w-full p-4 rounded-2xl text-black font-bold outline-none text-lg bg-white focus:ring-4 focus:ring-blue-100">
                         </div>
 
                         <div>
-                            <label class="text-[11px] text-gray-400">합지 선택</label>
-                            <select id="board_select" onchange="calc()" class="w-full p-3 bg-white/10 rounded-xl text-sm outline-none border border-white/20">
+                            <label class="text-[11px] text-slate-400">합지 선택</label>
+                            <select id="board_select" onchange="calc()"
+                                    class="w-full p-3 bg-white/10 rounded-2xl text-sm outline-none border border-white/10 focus:border-blue-400">
                                 {% for b in boards %}
                                 <option value="{{ b.두께 }}"
                                         data-gak="{{ b.각양장_앞뒤 }}"
@@ -81,7 +141,7 @@
                             </select>
                         </div>
 
-                        <div id="selected_info" class="text-xs opacity-60">종이를 선택해주세요</div>
+                        <div id="selected_info" class="text-xs text-slate-300 min-h-[1.25rem]">종이를 선택해주세요</div>
                         <div id="fav_price_display" class="text-2xl font-bold text-blue-400 font-mono">0원</div>
                         <input type="hidden" id="hidden_thick" value="0">
                     </div>
@@ -90,69 +150,69 @@
                 <div id="favorites_bar" class="flex flex-col gap-2"></div>
             </div>
 
-            <!-- 오른쪽 영역 -->
             <div class="space-y-4">
-                <div class="glass-card p-4 shadow-sm text-center bg-white">
+                <div class="glass-card p-4 md:p-5 text-center bg-white">
                     <canvas id="mainCanvas" style="width:100%; height:300px;"></canvas>
-                    <div id="final_formula" class="mt-3 p-3 bg-slate-50 rounded-xl font-mono text-xs text-slate-500 font-bold">합지와 종이를 선택하면 규격이 표시됩니다.</div>
+                    <div id="final_formula"
+                         class="mt-3 p-3 bg-slate-50 rounded-2xl font-mono text-xs md:text-sm text-slate-500 font-bold leading-relaxed">
+                        합지와 종이를 선택하면 규격이 표시됩니다.
+                    </div>
                 </div>
 
-                <!-- 검색창을 중앙 영역으로 이동 -->
-                <div class="glass-card p-4 shadow-sm bg-white">
-                    <form method="POST" class="flex items-center gap-3">
-                        <input type="text"
-                               name="keyword"
-                               value="{{ keyword }}"
-                               placeholder="메탈"
-                               class="flex-1 p-4 rounded-2xl outline-none border-2 border-slate-200 focus:border-blue-500 text-lg">
+                <div class="glass-card p-4">
+                    <form method="POST" class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                        <input type="text" name="keyword" value="{{ keyword }}" placeholder="검색어를 입력하세요 (예: 메탈)"
+                               class="flex-1 p-4 rounded-2xl outline-none border-2 border-slate-200 focus:border-blue-500 text-base md:text-lg">
                         <button type="submit"
-                                class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shrink-0 min-w-[120px] text-lg">
+                                class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shrink-0 min-w-[120px] text-lg hover:bg-blue-700 transition">
                             검색
                         </button>
                     </form>
                 </div>
 
                 {% if results %}
-                <div class="glass-card overflow-hidden shadow-sm">
-                    <table class="w-full text-left text-sm" id="resultTable">
-                        <thead class="bg-slate-50 border-b text-[11px] text-slate-500 font-bold">
-                            <tr>
-                                <th class="p-4 text-center">⭐</th>
-                                <th class="p-4 sortable" onclick="sortTable(1, 'str')">품목 정보</th>
-                                <th class="p-4 text-center sortable" onclick="sortTable(2, 'num')">평량(g)</th>
-                                <th class="p-4 text-center">두께</th>
-                                <th class="p-4 text-right">고시가</th>
-                                <th class="p-4 text-center">링크</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y">
-                            {% for item in results %}
-                            <tr class="hover:bg-blue-50 cursor-pointer"
-                                data-id="{{ item.row_id }}"
-                                data-name="{{ item.품목 }}"
-                                data-thick="{{ item.두께 }}"
-                                data-gram="{{ item.평량 }}"
-                                data-price="{{ item.고시가 }}"
-                                data-color="{{ item.색상 }}"
-                                data-size="{{ item.사이즈 }}"
-                                onclick="selectRow(this)">
-                                <td class="p-4 text-center">
-                                    <button onclick="handleFavorite(event, this)" class="fav-star text-2xl">★</button>
-                                </td>
-                                <td class="p-4">
-                                    <div class="font-bold text-slate-900">{{ item.품목 }}</div>
-                                    <div class="text-[13px] text-slate-400">{{ item.색상 }} | {{ item.시트명 }} | {{ item.사이즈 }}</div>
-                                </td>
-                                <td class="p-4 text-center font-bold text-slate-600">{{ item.평량 }}</td>
-                                <td class="p-4 text-center font-bold text-blue-600">{{ item.두께 }}μm</td>
-                                <td class="p-4 font-bold text-right">{{ item.고시가 }}</td>
-                                <td class="p-4 text-center">
-                                    <a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" class="p-2 bg-slate-100 rounded-lg text-blue-600">🔗</a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="glass-card overflow-hidden">
+                    <div class="table-wrap">
+                        <table class="w-full text-left text-sm" id="resultTable">
+                            <thead class="bg-slate-50 border-b text-[11px] text-slate-500 font-bold">
+                                <tr>
+                                    <th class="p-4 text-center w-[56px]">⭐</th>
+                                    <th class="p-4 sortable whitespace-nowrap" onclick="sortTable(1, 'str')">품목 정보</th>
+                                    <th class="p-4 text-center sortable whitespace-nowrap" onclick="sortTable(2, 'num')">평량(g)</th>
+                                    <th class="p-4 text-center whitespace-nowrap">두께</th>
+                                    <th class="p-4 text-right whitespace-nowrap">고시가</th>
+                                    <th class="p-4 text-center whitespace-nowrap">링크</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 bg-white">
+                                {% for item in results %}
+                                <tr class="hover:bg-blue-50 cursor-pointer"
+                                    data-id="{{ item.품목 }}_{{ item.평량 }}_{{ item.색상 }}_{{ item.두께 }}_{{ item.사이즈 }}"
+                                    data-name="{{ item.품목 }}"
+                                    data-thick="{{ item.두께 }}"
+                                    data-gram="{{ item.평량 }}"
+                                    data-price="{{ item.고시가 }}"
+                                    data-color="{{ item.색상 }}"
+                                    data-size="{{ item.사이즈 }}"
+                                    onclick="selectRow(this)">
+                                    <td class="p-4 text-center">
+                                        <button onclick="handleFavorite(event, this)" class="fav-star text-2xl">★</button>
+                                    </td>
+                                    <td class="p-4">
+                                        <div class="font-bold text-slate-900 leading-tight">{{ item.품목 }}</div>
+                                        <div class="text-[13px] text-slate-400 mt-1">{{ item.색상 }} | {{ item.시트명 }} | {{ item.사이즈 }}</div>
+                                    </td>
+                                    <td class="p-4 text-center font-bold text-slate-600">{{ item.평량 }}</td>
+                                    <td class="p-4 text-center font-bold text-blue-600">{{ item.두께 }}μm</td>
+                                    <td class="p-4 text-right font-bold price-cell">{{ item.고시가 }}</td>
+                                    <td class="p-4 text-center">
+                                        <a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center justify-center w-9 h-9 bg-slate-100 rounded-xl text-blue-600 hover:bg-blue-100">🔗</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 {% endif %}
             </div>
@@ -164,6 +224,19 @@
         let mode = 'soft';
         let currentSortCol = -1;
         let isAsc = true;
+
+        // 고정된 저장소 키를 사용하여 모든 검색에서 즐겨찾기를 공유함
+        function getFavStorageKey() {
+            return 'paper_pro_global_favs';
+        }
+
+        function getCurrentFavorites() {
+            return JSON.parse(localStorage.getItem(getFavStorageKey()) || '[]');
+        }
+
+        function saveCurrentFavorites(favs) {
+            localStorage.setItem(getFavStorageKey(), JSON.stringify(favs));
+        }
 
         function setMode(m) {
             mode = m;
@@ -190,6 +263,7 @@
             const misoFB = parseFloat(sel.selectedOptions[0]?.dataset.miso) || 0;
             const bleed  = parseFloat(sel.selectedOptions[0]?.dataset.bleed) || 17;
 
+            // 본문 두께 계산 (V20 공식)
             const textThick = (t_um / 1000) * pg / 2;
             document.getElementById('seneca_result').innerText = t_um > 0 ? Math.ceil(textThick) : "0";
 
@@ -227,6 +301,7 @@
                 document.getElementById('final_formula').innerText =
                     `규격 : ${totalW} × ${totalH}mm  (가로: ${bleed}+${boardW}+${joint}+${spine}+${joint}+${boardW}+${bleed} / 세로: ${bleed}+${innerH}+${bleed})`;
             }
+
             draw(bleed, boardW, joint, spine, h);
         }
 
@@ -254,11 +329,13 @@
                 x += cw;
             };
 
-            box(bleed, "여분", "#fee2e2", true); box(board, "보드", "#f1f5f9");
+            box(bleed, "여분", "#fee2e2", true);
+            box(board, "보드", "#f1f5f9");
             if (joint > 0) box(joint, "홈", "#f8fafc");
             box(spine || 0, "세네카", "#ffffff");
             if (joint > 0) box(joint, "홈", "#f8fafc");
-            box(board, "보드", "#f1f5f9"); box(bleed, "여분", "#fee2e2", true);
+            box(board, "보드", "#f1f5f9");
+            box(bleed, "여분", "#fee2e2", true);
         }
 
         function sortTable(colIdx, type) {
@@ -275,41 +352,50 @@
 
         function handleFavorite(e, btn) {
             e.stopPropagation();
-            const d   = btn.closest('tr').dataset;
-            let favs  = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            const d = btn.closest('tr').dataset;
+            let favs = getCurrentFavorites();
+
             const idx = favs.findIndex(f => f.id === d.id);
+
             if (idx > -1) {
                 favs.splice(idx, 1);
-                btn.classList.remove('active');
             } else {
-                favs.push({ id: d.id, name: d.name, thick: d.thick, gram: d.gram, price: d.price, color: d.color, size: d.size });
-                btn.classList.add('active');
+                favs.push({
+                    id: d.id,
+                    name: d.name,
+                    thick: d.thick,
+                    gram: d.gram,
+                    price: d.price,
+                    color: d.color,
+                    size: d.size
+                });
             }
-            localStorage.setItem('paper_favs', JSON.stringify(favs));
+
+            saveCurrentFavorites(favs);
             renderFavorites();
         }
 
         function renderFavorites() {
-            const bar  = document.getElementById('favorites_bar');
+            const bar = document.getElementById('favorites_bar');
             if (!bar) return;
-            const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+
+            const favs = getCurrentFavorites();
 
             const clearBtn = favs.length > 0
-                ? `<div class="flex justify-end">
-                       <button onclick="clearAllFavorites()"
-                           class="text-xs text-red-400 hover:text-red-600 font-bold px-3 py-1 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 transition">
-                           🗑 전체 삭제
-                       </button>
+                ? `<div class="flex justify-between items-center mb-1">
+                       <span class="text-xs font-bold text-slate-400">즐겨찾기 목록</span>
+                       <button onclick="clearAllFavorites()" class="text-[10px] text-red-400 hover:underline">모두 삭제</button>
                    </div>`
                 : '';
 
             bar.innerHTML = clearBtn + favs.map(f => `
-                <div onclick="quickDisplay('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.color}', '${f.size}')"
-                     class="flex items-center gap-3 px-4 py-3 bg-white border-2 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300">
-                    <span class="text-yellow-400 text-lg" onclick="removeFavoriteFromBar(event, '${f.id}')">★</span>
-                    <div class="flex flex-col">
-                        <span class="text-sm font-bold text-slate-700">${f.name} ${f.gram}g</span>
-                        <span class="text-[11px] text-slate-400">${f.color || ''} | ${f.size || ''}</span>
+                <div onclick="quickDisplay('${f.thick}', '${escapeQuotes(f.name)}', '${f.gram}', '${f.price}', '${escapeQuotes(f.size || '')}')"
+                     class="group flex items-center gap-3 px-4 py-3 bg-white border-2 border-transparent rounded-2xl shadow-sm cursor-pointer hover:border-blue-300 transition-all">
+                    <span class="text-yellow-400 text-lg hover:scale-120 transition-transform" 
+                          onclick="removeFavoriteById(event, '${f.id}')">★</span>
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-sm font-bold text-slate-700 truncate">${f.name} ${f.gram}g</span>
+                        <span class="text-[11px] text-slate-400 truncate">${f.color || ''} | ${f.size || ''}</span>
                     </div>
                     <span class="ml-auto text-sm font-bold text-blue-500">${f.price}원</span>
                 </div>
@@ -317,39 +403,50 @@
 
             document.querySelectorAll('#resultTable tbody tr').forEach(row => {
                 const starBtn = row.querySelector('.fav-star');
-                if (starBtn) {
-                    if (favs.find(f => f.id === row.dataset.id)) {
-                        starBtn.classList.add('active');
-                    } else {
-                        starBtn.classList.remove('active');
-                    }
+                if (!starBtn) return;
+                
+                const isMatched = favs.some(f => f.id === row.dataset.id);
+                if (isMatched) {
+                    starBtn.classList.add('active');
+                } else {
+                    starBtn.classList.remove('active');
                 }
             });
         }
 
-        function removeFavoriteFromBar(e, id) {
+        function removeFavoriteById(e, id) {
             e.stopPropagation();
-            let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            let favs = getCurrentFavorites();
             favs = favs.filter(f => f.id !== id);
-            localStorage.setItem('paper_favs', JSON.stringify(favs));
+            saveCurrentFavorites(favs);
             renderFavorites();
         }
 
         function clearAllFavorites() {
-            if (!confirm('즐겨찾기를 전체 삭제할까요?')) return;
-            localStorage.removeItem('paper_favs');
+            if (!confirm('모든 즐겨찾기를 삭제할까요?')) return;
+            localStorage.removeItem(getFavStorageKey());
             renderFavorites();
         }
 
-        function quickDisplay(thick, name, gram, price, color, size) {
+        function escapeQuotes(str) {
+            return String(str).replace(/'/g, "\\\\'");
+        }
+
+        function quickDisplay(thick, name, gram, price, size) {
             document.getElementById('hidden_thick').value = thick;
             document.getElementById('selected_info').innerText = `${name} ${gram}g | ${size || ''}`;
             document.getElementById('fav_price_display').innerText = `${price}원`;
             calc();
         }
 
-        window.onload = () => { renderFavorites(); calc(); };
-        window.onresize = () => { calc(); };
+        window.onload = () => {
+            renderFavorites();
+            calc();
+        };
+
+        window.onresize = () => {
+            calc();
+        };
     </script>
 </body>
 </html>
