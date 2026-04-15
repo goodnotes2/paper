@@ -68,6 +68,10 @@
         .price-cell {
             white-space: nowrap;
         }
+
+        .result-table {
+            min-width: 1180px;
+        }
     </style>
 </head>
 <body class="min-h-screen p-3 md:p-6">
@@ -173,14 +177,17 @@
                 {% if results %}
                 <div class="glass-card overflow-hidden">
                     <div class="table-wrap">
-                        <table class="w-full text-left text-sm" id="resultTable">
+                        <table class="w-full text-left text-sm result-table" id="resultTable">
                             <thead class="bg-slate-50 border-b text-[11px] text-slate-500 font-bold">
                                 <tr>
                                     <th class="p-4 text-center w-[56px]">⭐</th>
-                                    <th class="p-4 sortable whitespace-nowrap" onclick="sortTable(1, 'str')">품목 정보</th>
-                                    <th class="p-4 text-center sortable whitespace-nowrap" onclick="sortTable(2, 'num')">평량(g)</th>
-                                    <th class="p-4 text-center whitespace-nowrap">두께</th>
-                                    <th class="p-4 text-right whitespace-nowrap">고시가</th>
+                                    <th class="p-4 sortable whitespace-nowrap" onclick="sortTable(1, 'str')">품목</th>
+                                    <th class="p-4 sortable whitespace-nowrap text-center" onclick="sortTable(2, 'str')">사이즈</th>
+                                    <th class="p-4 text-center sortable whitespace-nowrap" onclick="sortTable(3, 'num')">평량(g)</th>
+                                    <th class="p-4 sortable whitespace-nowrap text-center" onclick="sortTable(4, 'str')">색상 및 패턴</th>
+                                    <th class="p-4 text-center sortable whitespace-nowrap" onclick="sortTable(5, 'num')">두께</th>
+                                    <th class="p-4 text-right sortable whitespace-nowrap" onclick="sortTable(6, 'num')">고시가</th>
+                                    <th class="p-4 sortable whitespace-nowrap text-center" onclick="sortTable(7, 'str')">시트명</th>
                                     <th class="p-4 text-center whitespace-nowrap">링크</th>
                                 </tr>
                             </thead>
@@ -198,13 +205,13 @@
                                     <td class="p-4 text-center">
                                         <button onclick="handleFavorite(event, this)" class="fav-star text-2xl">★</button>
                                     </td>
-                                    <td class="p-4">
-                                        <div class="font-bold text-slate-900 leading-tight">{{ item.품목 }}</div>
-                                        <div class="text-[13px] text-slate-400 mt-1">{{ item.색상 }} | {{ item.시트명 }} | {{ item.사이즈 }}</div>
-                                    </td>
-                                    <td class="p-4 text-center font-bold text-slate-600">{{ item.평량 }}</td>
-                                    <td class="p-4 text-center font-bold text-blue-600">{{ item.두께 }}μm</td>
-                                    <td class="p-4 text-right font-bold price-cell">{{ item.고시가 }}</td>
+                                    <td class="p-4 font-bold text-slate-900 whitespace-nowrap">{{ item.품목 }}</td>
+                                    <td class="p-4 text-center text-slate-600 whitespace-nowrap">{{ item.사이즈 }}</td>
+                                    <td class="p-4 text-center font-bold text-slate-600 whitespace-nowrap">{{ item.평량 }}</td>
+                                    <td class="p-4 text-center text-slate-600 whitespace-nowrap">{{ item.색상 }}</td>
+                                    <td class="p-4 text-center font-bold text-blue-600 whitespace-nowrap">{{ item.두께 }}μm</td>
+                                    <td class="p-4 text-right font-bold price-cell whitespace-nowrap">{{ item.고시가 }}</td>
+                                    <td class="p-4 text-center text-slate-500 whitespace-nowrap">{{ item.시트명 }}</td>
                                     <td class="p-4 text-center">
                                         <a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center justify-center w-9 h-9 bg-slate-100 rounded-xl text-blue-600 hover:bg-blue-100">🔗</a>
                                     </td>
@@ -225,7 +232,6 @@
         let currentSortCol = -1;
         let isAsc = true;
 
-        // 고정된 저장소 키를 사용하여 모든 검색에서 즐겨찾기를 공유함
         function getFavStorageKey() {
             return 'paper_pro_global_favs';
         }
@@ -263,7 +269,6 @@
             const misoFB = parseFloat(sel.selectedOptions[0]?.dataset.miso) || 0;
             const bleed  = parseFloat(sel.selectedOptions[0]?.dataset.bleed) || 17;
 
-            // 본문 두께 계산 (V20 공식)
             const textThick = (t_um / 1000) * pg / 2;
             document.getElementById('seneca_result').innerText = t_um > 0 ? Math.ceil(textThick) : "0";
 
@@ -343,8 +348,8 @@
             const rows  = Array.from(tbody.querySelectorAll("tr"));
             if (currentSortCol === colIdx) isAsc = !isAsc; else { isAsc = true; currentSortCol = colIdx; }
             rows.sort((a, b) => {
-                let vA = a.cells[colIdx].innerText.replace(/,/g, '').trim();
-                let vB = b.cells[colIdx].innerText.replace(/,/g, '').trim();
+                let vA = a.cells[colIdx].innerText.replace(/,/g, '').replace(/μm/g, '').trim();
+                let vB = b.cells[colIdx].innerText.replace(/,/g, '').replace(/μm/g, '').trim();
                 return type === 'num' ? (parseFloat(vA) - parseFloat(vB)) * (isAsc ? 1 : -1) : vA.localeCompare(vB) * (isAsc ? 1 : -1);
             });
             rows.forEach(r => tbody.appendChild(r));
@@ -404,7 +409,7 @@
             document.querySelectorAll('#resultTable tbody tr').forEach(row => {
                 const starBtn = row.querySelector('.fav-star');
                 if (!starBtn) return;
-                
+
                 const isMatched = favs.some(f => f.id === row.dataset.id);
                 if (isMatched) {
                     starBtn.classList.add('active');
