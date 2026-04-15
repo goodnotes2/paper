@@ -78,7 +78,7 @@
 
         .fav-list-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
             gap: 10px;
         }
 
@@ -97,6 +97,7 @@
 
         .results-zone {
             width: 100%;
+            min-width: 0;
         }
 
         .results-zone > .glass-card {
@@ -106,7 +107,7 @@
         @media (min-width: 1280px) {
             .main-layout {
                 display: grid;
-                grid-template-columns: 320px minmax(0, 1fr);
+                grid-template-columns: 280px minmax(0, 1fr);
                 gap: 16px;
                 align-items: start;
             }
@@ -129,7 +130,7 @@
     </div>
     {% else %}
 
-    <div class="max-w-[1700px] mx-auto space-y-4">
+    <div class="max-w-[1880px] mx-auto space-y-4">
         <div class="grid grid-cols-3 gap-3">
             <div class="mode-btn active" id="btn-soft" onclick="setMode('soft')">
                 <p class="font-bold text-sm md:text-base">환양장미소(인조없음)</p>
@@ -449,7 +450,7 @@
             const clearBtn = favs.length > 0
                 ? `<div class="flex justify-between items-center mb-3">
                        <span class="text-xs font-bold text-slate-400">즐겨찾기 목록</span>
-                       <button onclick="clearAllFavorites()" class="text-[10px] text-red-400 hover:underline">모두 삭제</button>
+                       <button type="button" onclick="clearAllFavorites()" class="text-[10px] text-red-400 hover:underline">모두 삭제</button>
                    </div>`
                 : '<div class="text-xs font-bold text-slate-400">즐겨찾기 목록</div>';
 
@@ -458,8 +459,9 @@
                     ${favs.map(f => `
                         <div onclick="quickDisplay('${f.thick}', '${escapeQuotes(f.name)}', '${f.gram}', '${f.price}', '${escapeQuotes(f.size || '')}')"
                              class="fav-item-card group flex items-start gap-3 px-4 py-3 bg-white border-2 border-slate-100 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300 transition-all">
-                            <span class="text-yellow-400 text-lg shrink-0 hover:scale-120 transition-transform"
-                                  onclick="removeFavoriteById(event, '${f.id}')">★</span>
+                            <button type="button"
+                                    class="text-yellow-400 text-lg shrink-0 hover:scale-120 transition-transform"
+                                    onclick="removeFavoriteById(event, '${f.id}')">★</button>
                             <div class="flex flex-col min-w-0 flex-1">
                                 <span class="text-sm font-bold text-slate-700 fav-text-wrap">${f.name} ${f.gram}g</span>
                                 <span class="text-[11px] text-slate-400 fav-text-wrap">${f.color || ''} | ${f.size || ''}</span>
