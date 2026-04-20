@@ -76,6 +76,14 @@
             white-space: nowrap;
         }
 
+        .color-wrap {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            word-break: break-word;
+            line-height: 1.35;
+        }
+
         .fav-list-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -263,7 +271,7 @@
                                 </td>
                                 <td class="p-3 text-center font-bold text-slate-600 whitespace-nowrap">{{ item.평량 }}</td>
                                 <td class="p-3 text-center text-slate-600">
-                                    <div class="cell-truncate">{{ item.색상 }}</div>
+                                    <div class="color-wrap">{{ item.색상 }}</div>
                                 </td>
                                 <td class="p-3 text-center font-bold text-blue-600 whitespace-nowrap">{{ item.두께 }}μm</td>
                                 <td class="p-3 text-right font-bold price-cell whitespace-nowrap">{{ item.고시가 }}</td>
