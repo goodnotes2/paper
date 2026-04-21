@@ -112,7 +112,6 @@
             width: 100%;
         }
 
-        /* ▼ 추가된 부분 */
         .price-toggle {
             cursor: pointer;
             user-select: none;
@@ -125,7 +124,6 @@
         .price-toggle.per-sheet {
             color: #10b981;
         }
-        /* ▲ 추가된 부분 */
 
         @media (min-width: 1280px) {
             .main-layout {
@@ -134,6 +132,14 @@
                 gap: 16px;
                 align-items: start;
             }
+
+            /* ▼ 추가된 부분: 왼쪽 패널 sticky */
+            .main-layout > div:first-child {
+                position: sticky;
+                top: 16px;
+                align-self: start;
+            }
+            /* ▲ 추가된 부분 */
         }
     </style>
 </head>
@@ -289,8 +295,6 @@
                                     <div class="color-wrap">{{ item.색상 }}</div>
                                 </td>
                                 <td class="p-3 text-center font-bold text-blue-600 whitespace-nowrap">{{ item.두께 }}μm</td>
-
-                                <!-- ▼ 고시가 셀만 수정 -->
                                 <td class="p-3 text-right font-bold price-cell whitespace-nowrap"
                                     onclick="event.stopPropagation(); togglePrice(this, '{{ item.고시가 }}')"
                                     data-original="{{ item.고시가 }}"
@@ -298,8 +302,6 @@
                                     title="클릭 → 낱장가격(/500)">
                                     <span class="price-toggle">{{ item.고시가 }}</span>
                                 </td>
-                                <!-- ▲ 고시가 셀만 수정 -->
-
                                 <td class="p-3 text-center text-slate-500 whitespace-nowrap">
                                     <div class="cell-truncate">{{ item.시트명 }}</div>
                                 </td>
@@ -547,7 +549,6 @@
             calc();
         }
 
-        /* ▼ 추가된 함수 */
         function togglePrice(td, originalPrice) {
             const span = td.querySelector('.price-toggle');
             if (td.dataset.mode === 'origin') {
@@ -562,7 +563,6 @@
                 span.classList.remove('per-sheet');
             }
         }
-        /* ▲ 추가된 함수 */
 
         window.onload = () => {
             renderFavorites();
