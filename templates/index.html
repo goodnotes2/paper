@@ -12,14 +12,12 @@
             background: #f3f6fb;
             color: #0f172a;
         }
-
         .glass-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 18px;
             box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
         }
-
         .mode-btn {
             cursor: pointer;
             transition: all 0.2s ease;
@@ -30,88 +28,26 @@
             text-align: center;
             box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
         }
-
         .mode-btn.active {
             border-color: #3b82f6;
             background: #3b82f6;
             color: #ffffff;
             box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22);
         }
-
-        .mode-btn:hover {
-            transform: translateY(-1px);
-        }
-
-        .fav-star {
-            color: #cbd5e1;
-            transition: color 0.2s;
-        }
-
-        .fav-star.active {
-            color: #facc15 !important;
-        }
-
-        th.sortable {
-            cursor: pointer;
-            position: relative;
-            user-select: none;
-        }
-
-        th.sortable:hover {
-            background-color: #f8fafc;
-        }
-
-        .price-cell {
-            white-space: nowrap;
-        }
-
-        .result-table {
-            width: 100%;
-            table-layout: fixed;
-        }
-
-        .cell-truncate {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .color-wrap {
-            white-space: normal;
-            overflow: visible;
-            text-overflow: clip;
-            word-break: break-word;
-            line-height: 1.35;
-        }
-
-        .fav-list-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-            gap: 10px;
-        }
-
-        .fav-item-card {
-            min-width: 0;
-        }
-
-        .fav-text-wrap {
-            min-width: 0;
-            white-space: normal;
-            overflow: visible;
-            text-overflow: clip;
-            word-break: break-word;
-            line-height: 1.35;
-        }
-
-        .results-zone {
-            width: 100%;
-            min-width: 0;
-        }
-
-        .results-zone > .glass-card {
-            width: 100%;
-        }
-
+        .mode-btn:hover { transform: translateY(-1px); }
+        .fav-star { color: #cbd5e1; transition: color 0.2s; }
+        .fav-star.active { color: #facc15 !important; }
+        th.sortable { cursor: pointer; position: relative; user-select: none; }
+        th.sortable:hover { background-color: #f8fafc; }
+        .price-cell { white-space: nowrap; }
+        .result-table { width: 100%; table-layout: fixed; }
+        .cell-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .color-wrap { white-space: normal; overflow: visible; text-overflow: clip; word-break: break-word; line-height: 1.35; }
+        .fav-list-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+        .fav-item-card { min-width: 0; }
+        .fav-text-wrap { min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; word-break: break-word; line-height: 1.35; }
+        .results-zone { width: 100%; min-width: 0; }
+        .results-zone > .glass-card { width: 100%; }
         @media (min-width: 1280px) {
             .main-layout {
                 display: grid;
@@ -158,7 +94,6 @@
                         <span class="text-xs font-bold tracking-[0.2em] text-blue-300">SPINE THICKNESS</span>
                         <span id="seneca_result" class="text-5xl font-light font-mono text-blue-400">0</span>
                     </div>
-
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -172,13 +107,11 @@
                                        class="w-full p-3 bg-white/10 rounded-2xl text-sm outline-none border border-white/10 focus:border-blue-400">
                             </div>
                         </div>
-
                         <div>
                             <label class="text-[11px] text-slate-400">페이지수(P)</label>
                             <input type="number" id="page_input" value="200" oninput="calc()"
                                    class="w-full p-4 rounded-2xl text-black font-bold outline-none text-lg bg-white focus:ring-4 focus:ring-blue-100">
                         </div>
-
                         <div>
                             <label class="text-[11px] text-slate-400">합지 선택</label>
                             <select id="board_select" onchange="calc()"
@@ -192,7 +125,6 @@
                                 {% endfor %}
                             </select>
                         </div>
-
                         <div id="selected_info" class="text-xs text-slate-300 min-h-[1.25rem]">종이를 선택해주세요</div>
                         <div id="fav_price_display" class="text-2xl font-bold text-blue-400 font-mono">0원</div>
                         <input type="hidden" id="hidden_thick" value="0">
@@ -324,7 +256,9 @@
             const d = el.dataset;
             document.getElementById('hidden_thick').value = d.thick;
             document.getElementById('selected_info').innerText = `${d.name} ${d.gram}g | ${d.size || ''}`;
-            document.getElementById('fav_price_display').innerText = `${d.price}원`;
+            const rawPrice = parseFloat(String(d.price).replace(/,/g, '')) || 0;
+            const per500 = Math.round(rawPrice / 500);
+            document.getElementById('fav_price_display').innerText = `${d.price}원  →  낱장: ${per500.toLocaleString()}원`;
             calc();
         }
 
@@ -428,9 +362,7 @@
             e.stopPropagation();
             const d = btn.closest('tr').dataset;
             let favs = getCurrentFavorites();
-
             const idx = favs.findIndex(f => f.id === d.id);
-
             if (idx > -1) {
                 favs.splice(idx, 1);
             } else {
@@ -444,7 +376,6 @@
                     size: d.size
                 });
             }
-
             saveCurrentFavorites(favs);
             renderFavorites();
         }
@@ -483,7 +414,6 @@
             document.querySelectorAll('#resultTable tbody tr').forEach(row => {
                 const starBtn = row.querySelector('.fav-star');
                 if (!starBtn) return;
-
                 const isMatched = favs.some(f => f.id === row.dataset.id);
                 if (isMatched) {
                     starBtn.classList.add('active');
@@ -508,13 +438,15 @@
         }
 
         function escapeQuotes(str) {
-            return String(str).replace(/'/g, "\\\\'");
+            return String(str).replace(/'/g, "\\\\\\\\'");
         }
 
         function quickDisplay(thick, name, gram, price, size) {
             document.getElementById('hidden_thick').value = thick;
             document.getElementById('selected_info').innerText = `${name} ${gram}g | ${size || ''}`;
-            document.getElementById('fav_price_display').innerText = `${price}원`;
+            const rawPrice = parseFloat(String(price).replace(/,/g, '')) || 0;
+            const per500 = Math.round(rawPrice / 500);
+            document.getElementById('fav_price_display').innerText = `${price}원  →  낱장: ${per500.toLocaleString()}원`;
             calc();
         }
 
