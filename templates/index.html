@@ -12,12 +12,14 @@
             background: #f3f6fb;
             color: #0f172a;
         }
+
         .glass-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 18px;
             box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
         }
+
         .mode-btn {
             cursor: pointer;
             transition: all 0.2s ease;
@@ -28,26 +30,103 @@
             text-align: center;
             box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
         }
+
         .mode-btn.active {
             border-color: #3b82f6;
             background: #3b82f6;
             color: #ffffff;
             box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22);
         }
-        .mode-btn:hover { transform: translateY(-1px); }
-        .fav-star { color: #cbd5e1; transition: color 0.2s; }
-        .fav-star.active { color: #facc15 !important; }
-        th.sortable { cursor: pointer; position: relative; user-select: none; }
-        th.sortable:hover { background-color: #f8fafc; }
-        .price-cell { white-space: nowrap; }
-        .result-table { width: 100%; table-layout: fixed; }
-        .cell-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .color-wrap { white-space: normal; overflow: visible; text-overflow: clip; word-break: break-word; line-height: 1.35; }
-        .fav-list-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
-        .fav-item-card { min-width: 0; }
-        .fav-text-wrap { min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; word-break: break-word; line-height: 1.35; }
-        .results-zone { width: 100%; min-width: 0; }
-        .results-zone > .glass-card { width: 100%; }
+
+        .mode-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .fav-star {
+            color: #cbd5e1;
+            transition: color 0.2s;
+        }
+
+        .fav-star.active {
+            color: #facc15 !important;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        th.sortable:hover {
+            background-color: #f8fafc;
+        }
+
+        .price-cell {
+            white-space: nowrap;
+        }
+
+        .result-table {
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .cell-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .color-wrap {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            word-break: break-word;
+            line-height: 1.35;
+        }
+
+        .fav-list-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 10px;
+        }
+
+        .fav-item-card {
+            min-width: 0;
+        }
+
+        .fav-text-wrap {
+            min-width: 0;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            word-break: break-word;
+            line-height: 1.35;
+        }
+
+        .results-zone {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .results-zone > .glass-card {
+            width: 100%;
+        }
+
+        /* ▼ 추가된 부분 */
+        .price-toggle {
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+        }
+        .price-toggle:hover {
+            color: #3b82f6;
+            text-decoration: underline dotted;
+        }
+        .price-toggle.per-sheet {
+            color: #10b981;
+        }
+        /* ▲ 추가된 부분 */
+
         @media (min-width: 1280px) {
             .main-layout {
                 display: grid;
@@ -94,6 +173,7 @@
                         <span class="text-xs font-bold tracking-[0.2em] text-blue-300">SPINE THICKNESS</span>
                         <span id="seneca_result" class="text-5xl font-light font-mono text-blue-400">0</span>
                     </div>
+
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -107,11 +187,13 @@
                                        class="w-full p-3 bg-white/10 rounded-2xl text-sm outline-none border border-white/10 focus:border-blue-400">
                             </div>
                         </div>
+
                         <div>
                             <label class="text-[11px] text-slate-400">페이지수(P)</label>
                             <input type="number" id="page_input" value="200" oninput="calc()"
                                    class="w-full p-4 rounded-2xl text-black font-bold outline-none text-lg bg-white focus:ring-4 focus:ring-blue-100">
                         </div>
+
                         <div>
                             <label class="text-[11px] text-slate-400">합지 선택</label>
                             <select id="board_select" onchange="calc()"
@@ -125,6 +207,7 @@
                                 {% endfor %}
                             </select>
                         </div>
+
                         <div id="selected_info" class="text-xs text-slate-300 min-h-[1.25rem]">종이를 선택해주세요</div>
                         <div id="fav_price_display" class="text-2xl font-bold text-blue-400 font-mono">0원</div>
                         <input type="hidden" id="hidden_thick" value="0">
@@ -206,7 +289,17 @@
                                     <div class="color-wrap">{{ item.색상 }}</div>
                                 </td>
                                 <td class="p-3 text-center font-bold text-blue-600 whitespace-nowrap">{{ item.두께 }}μm</td>
-                                <td class="p-3 text-right font-bold price-cell whitespace-nowrap">{{ item.고시가 }}</td>
+
+                                <!-- ▼ 고시가 셀만 수정 -->
+                                <td class="p-3 text-right font-bold price-cell whitespace-nowrap"
+                                    onclick="event.stopPropagation(); togglePrice(this, '{{ item.고시가 }}')"
+                                    data-original="{{ item.고시가 }}"
+                                    data-mode="origin"
+                                    title="클릭 → 낱장가격(/500)">
+                                    <span class="price-toggle">{{ item.고시가 }}</span>
+                                </td>
+                                <!-- ▲ 고시가 셀만 수정 -->
+
                                 <td class="p-3 text-center text-slate-500 whitespace-nowrap">
                                     <div class="cell-truncate">{{ item.시트명 }}</div>
                                 </td>
@@ -351,8 +444,8 @@
             const rows  = Array.from(tbody.querySelectorAll("tr"));
             if (currentSortCol === colIdx) isAsc = !isAsc; else { isAsc = true; currentSortCol = colIdx; }
             rows.sort((a, b) => {
-                let vA = a.cells[colIdx].innerText.replace(/,/g, '').replace(/μm/g, '').trim();
-                let vB = b.cells[colIdx].innerText.replace(/,/g, '').replace(/μm/g, '').trim();
+                let vA = a.cells[colIdx].innerText.replace(/,/g, '').replace(/μm/g, '').replace(/\(낱장\)/g, '').trim();
+                let vB = b.cells[colIdx].innerText.replace(/,/g, '').replace(/μm/g, '').replace(/\(낱장\)/g, '').trim();
                 return type === 'num' ? (parseFloat(vA) - parseFloat(vB)) * (isAsc ? 1 : -1) : vA.localeCompare(vB) * (isAsc ? 1 : -1);
             });
             rows.forEach(r => tbody.appendChild(r));
@@ -362,7 +455,9 @@
             e.stopPropagation();
             const d = btn.closest('tr').dataset;
             let favs = getCurrentFavorites();
+
             const idx = favs.findIndex(f => f.id === d.id);
+
             if (idx > -1) {
                 favs.splice(idx, 1);
             } else {
@@ -376,6 +471,7 @@
                     size: d.size
                 });
             }
+
             saveCurrentFavorites(favs);
             renderFavorites();
         }
@@ -414,6 +510,7 @@
             document.querySelectorAll('#resultTable tbody tr').forEach(row => {
                 const starBtn = row.querySelector('.fav-star');
                 if (!starBtn) return;
+
                 const isMatched = favs.some(f => f.id === row.dataset.id);
                 if (isMatched) {
                     starBtn.classList.add('active');
@@ -449,6 +546,23 @@
             document.getElementById('fav_price_display').innerText = `${price}원  →  낱장: ${per500.toLocaleString()}원`;
             calc();
         }
+
+        /* ▼ 추가된 함수 */
+        function togglePrice(td, originalPrice) {
+            const span = td.querySelector('.price-toggle');
+            if (td.dataset.mode === 'origin') {
+                const raw = parseFloat(String(originalPrice).replace(/,/g, '')) || 0;
+                const per500 = Math.round(raw / 500);
+                span.textContent = per500.toLocaleString() + '원 (낱장)';
+                td.dataset.mode = 'per500';
+                span.classList.add('per-sheet');
+            } else {
+                span.textContent = originalPrice + '원';
+                td.dataset.mode = 'origin';
+                span.classList.remove('per-sheet');
+            }
+        }
+        /* ▲ 추가된 함수 */
 
         window.onload = () => {
             renderFavorites();
