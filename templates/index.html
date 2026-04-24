@@ -3,33 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAPER PRO V20</title>
+    <title>PAPER PRO V20 - Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'IBM Plex Sans KR', sans-serif; background-color: #f1f5f9; }
-        .glass-card { background: white; border-radius: 1rem; border: 1px solid #e2e8f0; }
-        .mode-btn { cursor: pointer; transition: 0.2s; border: 2px solid #e2e8f0; border-radius: 12px; background: white; padding: 15px; text-align: center; }
-        .mode-btn.active { border-color: #3b82f6; background-color: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
-        .fav-star { color: #d1d5db; }
-        .fav-star.active { color: #facc15 !important; }
-        th.sortable { cursor: pointer; position: relative; }
-        th.sortable:hover { background-color: #f8fafc; }
+        body {
+            font-family: 'IBM Plex Sans KR', sans-serif;
+            background: #f3f6fb;
+            color: #0f172a;
+        }
+
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+        }
+
+        .mode-btn {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #dbe3ee;
+            border-radius: 16px;
+            background: #ffffff;
+            padding: 16px 14px;
+            text-align: center;
+            box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+        }
+
+        .mode-btn.active {
+            border-color: #3b82f6;
+            background: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22);
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .fav-star {
+            color: #cbd5e1;
+            transition: color 0.2s;
+        }
+
+        .fav-star.active {
+            color: #facc15 !important;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        th.sortable:hover {
+            background-color: #f8fafc;
+        }
+
+        .price-cell {
+            white-space: nowrap;
+        }
+
+        .result-table {
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .cell-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .color-wrap {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            word-break: break-word;
+            line-height: 1.35;
+        }
+
+        .fav-list-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 10px;
+        }
+
+        .fav-item-card {
+            min-width: 0;
+        }
+
+        .fav-text-wrap {
+            min-width: 0;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            word-break: break-word;
+            line-height: 1.35;
+        }
+
+        .results-zone {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .results-zone > .glass-card {
+            width: 100%;
+        }
+
+        .price-toggle {
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+        }
+        .price-toggle:hover {
+            color: #3b82f6;
+            text-decoration: underline dotted;
+        }
+        .price-toggle.per-sheet {
+            color: #10b981;
+        }
+
+        @media (min-width: 1280px) {
+            .main-layout {
+                display: grid;
+                grid-template-columns: 280px minmax(0, 1fr);
+                gap: 16px;
+                align-items: start;
+            }
+
+            /* ▼ 추가된 부분: 왼쪽 패널 sticky */
+            .main-layout > div:first-child {
+                position: sticky;
+                top: 16px;
+                align-self: start;
+            }
+            /* ▲ 추가된 부분 */
+        }
     </style>
 </head>
-<body class="p-3 md:p-6">
+<body class="min-h-screen p-3 md:p-6">
 
     {% if not authenticated %}
-    <div class="max-w-md mx-auto mt-20 p-8 glass-card shadow-xl text-center">
-        <h2 class="text-xl font-bold mb-6">보안 접속</h2>
+    <div class="max-w-md mx-auto mt-20 p-8 glass-card text-center">
+        <h2 class="text-2xl md:text-3xl font-bold text-slate-800 mb-6">보안 접속</h2>
         <form method="POST" class="space-y-4">
-            <input type="password" name="password" placeholder="비밀번호 입력" class="w-full p-4 border rounded-xl text-center outline-none focus:border-blue-500" autofocus>
-            <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold">확인</button>
+            <input type="password" name="password" placeholder="비밀번호 입력"
+                   class="w-full p-4 border border-slate-300 rounded-2xl text-center outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" autofocus>
+            <button type="submit"
+                    class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-lg hover:bg-blue-700 transition">
+                확인
+            </button>
         </form>
     </div>
     {% else %}
 
-    <div class="max-w-6xl mx-auto space-y-4">
+    <div class="max-w-[1880px] mx-auto space-y-4">
         <div class="grid grid-cols-3 gap-3">
             <div class="mode-btn active" id="btn-soft" onclick="setMode('soft')">
                 <p class="font-bold text-sm md:text-base">환양장미소(인조없음)</p>
@@ -42,22 +172,38 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="main-layout">
             <div class="space-y-4">
-                <div class="p-6 glass-card bg-slate-900 text-white shadow-lg">
+                <div class="p-6 glass-card bg-slate-950 text-white">
                     <div class="flex justify-between items-end mb-6">
-                        <span class="text-xs font-bold text-blue-300">SPINE THICKNESS</span>
+                        <span class="text-xs font-bold tracking-[0.2em] text-blue-300">SPINE THICKNESS</span>
                         <span id="seneca_result" class="text-5xl font-light font-mono text-blue-400">0</span>
                     </div>
+
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-3">
-                            <div><label class="text-[11px] text-gray-400">가로(W)</label><input type="number" id="bookW" value="148" oninput="calc()" class="w-full p-3 bg-white/10 rounded-xl text-sm outline-none"></div>
-                            <div><label class="text-[11px] text-gray-400">세로(H)</label><input type="number" id="bookH" value="210" oninput="calc()" class="w-full p-3 bg-white/10 rounded-xl text-sm outline-none"></div>
+                            <div>
+                                <label class="text-[11px] text-slate-400">가로(W)</label>
+                                <input type="number" id="bookW" value="148" oninput="calc()"
+                                       class="w-full p-3 bg-white/10 rounded-2xl text-sm outline-none border border-white/10 focus:border-blue-400">
+                            </div>
+                            <div>
+                                <label class="text-[11px] text-slate-400">세로(H)</label>
+                                <input type="number" id="bookH" value="210" oninput="calc()"
+                                       class="w-full p-3 bg-white/10 rounded-2xl text-sm outline-none border border-white/10 focus:border-blue-400">
+                            </div>
                         </div>
-                        <div><label class="text-[11px] text-gray-400">페이지수(P)</label><input type="number" id="page_input" value="200" oninput="calc()" class="w-full p-4 rounded-xl text-black font-bold outline-none text-lg"></div>
+
                         <div>
-                            <label class="text-[11px] text-gray-400">합지 선택</label>
-                            <select id="board_select" onchange="calc()" class="w-full p-3 bg-white/10 rounded-xl text-sm outline-none border border-white/20">
+                            <label class="text-[11px] text-slate-400">페이지수(P)</label>
+                            <input type="number" id="page_input" value="200" oninput="calc()"
+                                   class="w-full p-4 rounded-2xl text-black font-bold outline-none text-lg bg-white focus:ring-4 focus:ring-blue-100">
+                        </div>
+
+                        <div>
+                            <label class="text-[11px] text-slate-400">합지 선택</label>
+                            <select id="board_select" onchange="calc()"
+                                    class="w-full p-3 bg-white/10 rounded-2xl text-sm outline-none border border-white/10 focus:border-blue-400">
                                 {% for b in boards %}
                                 <option value="{{ b.두께 }}"
                                         data-gak="{{ b.각양장_앞뒤 }}"
@@ -67,44 +213,67 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div id="selected_info" class="text-xs opacity-60">종이를 선택해주세요</div>
+
+                        <div id="selected_info" class="text-xs text-slate-300 min-h-[1.25rem]">종이를 선택해주세요</div>
                         <div id="fav_price_display" class="text-2xl font-bold text-blue-400 font-mono">0원</div>
                         <input type="hidden" id="hidden_thick" value="0">
                     </div>
                 </div>
-
-                <div class="space-y-3">
-                    <form method="POST" class="relative">
-                        <input type="text" name="keyword" value="{{ keyword }}" placeholder="아코팩 검색..." class="w-full p-4 glass-card shadow-sm outline-none pr-24 border-2 focus:border-blue-500">
-                        <button type="submit" class="absolute right-2 top-2 bg-blue-600 text-white px-5 py-2 rounded-xl font-bold">검색</button>
-                    </form>
-                    <div id="favorites_bar" class="flex flex-col gap-2"></div>
-                </div>
             </div>
 
-            <div class="md:col-span-2 space-y-4">
-                <div class="glass-card p-4 shadow-sm text-center bg-white">
+            <div class="results-zone space-y-4">
+                <div class="glass-card p-4 md:p-5 text-center bg-white">
                     <canvas id="mainCanvas" style="width:100%; height:300px;"></canvas>
-                    <div id="final_formula" class="mt-3 p-3 bg-slate-50 rounded-xl font-mono text-xs text-slate-500 font-bold">합지와 종이를 선택하면 규격이 표시됩니다.</div>
+                    <div id="final_formula"
+                         class="mt-3 p-3 bg-slate-50 rounded-2xl font-mono text-xs md:text-sm text-slate-500 font-bold leading-relaxed">
+                        합지와 종이를 선택하면 규격이 표시됩니다.
+                    </div>
                 </div>
 
+                <div class="glass-card p-4">
+                    <form method="POST" class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                        <input type="text" name="keyword" value="{{ keyword }}" placeholder="검색어를 입력하세요 (예: 메탈)"
+                               class="flex-1 p-4 rounded-2xl outline-none border-2 border-slate-200 focus:border-blue-500 text-base md:text-lg">
+                        <button type="submit"
+                                class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shrink-0 min-w-[120px] text-lg hover:bg-blue-700 transition">
+                            검색
+                        </button>
+                    </form>
+                </div>
+
+                <div id="favorites_bar" class="glass-card p-4"></div>
+
                 {% if results %}
-                <div class="glass-card overflow-hidden shadow-sm">
-                    <table class="w-full text-left text-sm" id="resultTable">
+                <div class="glass-card overflow-hidden">
+                    <table class="w-full text-left text-sm result-table" id="resultTable">
+                        <colgroup>
+                            <col style="width:5%;">
+                            <col style="width:18%;">
+                            <col style="width:14%;">
+                            <col style="width:9%;">
+                            <col style="width:18%;">
+                            <col style="width:9%;">
+                            <col style="width:13%;">
+                            <col style="width:8%;">
+                            <col style="width:6%;">
+                        </colgroup>
                         <thead class="bg-slate-50 border-b text-[11px] text-slate-500 font-bold">
                             <tr>
-                                <th class="p-4 text-center">⭐</th>
-                                <th class="p-4 sortable" onclick="sortTable(1, 'str')">품목 정보</th>
-                                <th class="p-4 text-center sortable" onclick="sortTable(2, 'num')">평량(g)</th>
-                                <th class="p-4 text-center">두께</th>
-                                <th class="p-4 text-right">고시가</th>
-                                <th class="p-4 text-center">링크</th>
+                                <th class="p-3 text-center">⭐</th>
+                                <th class="p-3 sortable whitespace-nowrap" onclick="sortTable(1, 'str')">품목</th>
+                                <th class="p-3 sortable whitespace-nowrap text-center" onclick="sortTable(2, 'str')">사이즈</th>
+                                <th class="p-3 text-center sortable whitespace-nowrap" onclick="sortTable(3, 'num')">평량(g)</th>
+                                <th class="p-3 sortable whitespace-nowrap text-center" onclick="sortTable(4, 'str')">색상 및 패턴</th>
+                                <th class="p-3 text-center sortable whitespace-nowrap" onclick="sortTable(5, 'num')">두께</th>
+                                <th class="p-3 text-right sortable whitespace-nowrap" onclick="sortTable(6, 'num')">고시가</th>
+                                <th class="p-3 sortable whitespace-nowrap text-center" onclick="sortTable(7, 'str')">시트명</th>
+                                <th class="p-3 text-center whitespace-nowrap">링크</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y">
+                        <tbody class="divide-y divide-slate-200 bg-white">
                             {% for item in results %}
                             <tr class="hover:bg-blue-50 cursor-pointer"
-                                data-id="{{ item.row_id }}"
+                                data-id="{{ item.품목 }}_{{ item.평량 }}_{{ item.색상 }}_{{ item.두께 }}_{{ item.사이즈 }}"
                                 data-name="{{ item.품목 }}"
                                 data-thick="{{ item.두께 }}"
                                 data-gram="{{ item.평량 }}"
@@ -112,15 +281,37 @@
                                 data-color="{{ item.색상 }}"
                                 data-size="{{ item.사이즈 }}"
                                 onclick="selectRow(this)">
-                                <td class="p-4 text-center"><button onclick="handleFavorite(event, this)" class="fav-star text-2xl">★</button></td>
-                                <td class="p-4">
-                                    <div class="font-bold text-slate-900">{{ item.품목 }}</div>
-                                    <div class="text-[13px] text-slate-400">{{ item.색상 }} | {{ item.시트명 }} | {{ item.사이즈 }}</div>
+                                <td class="p-3 text-center">
+                                    <button onclick="handleFavorite(event, this)" class="fav-star text-xl">★</button>
                                 </td>
-                                <td class="p-4 text-center font-bold text-slate-600">{{ item.평량 }}</td>
-                                <td class="p-4 text-center font-bold text-blue-600">{{ item.두께 }}μm</td>
-                                <td class="p-4 font-bold text-right">{{ item.고시가 }}</td>
-                                <td class="p-4 text-center"><a href="{{ item.url }}" target="_blank" onclick="event.stopPropagation()" class="p-2 bg-slate-100 rounded-lg text-blue-600">🔗</a></td>
+                                <td class="p-3 font-bold text-slate-900">
+                                    <div class="cell-truncate">{{ item.품목 }}</div>
+                                </td>
+                                <td class="p-3 text-center text-slate-600 whitespace-nowrap">
+                                    <div class="cell-truncate">{{ item.사이즈 }}</div>
+                                </td>
+                                <td class="p-3 text-center font-bold text-slate-600 whitespace-nowrap">{{ item.평량 }}</td>
+                                <td class="p-3 text-center text-slate-600">
+                                    <div class="color-wrap">{{ item.색상 }}</div>
+                                </td>
+                                <td class="p-3 text-center font-bold text-blue-600 whitespace-nowrap">{{ item.두께 }}μm</td>
+                                <td class="p-3 text-right font-bold price-cell whitespace-nowrap"
+                                    onclick="event.stopPropagation(); togglePrice(this, '{{ item.고시가 }}')"
+                                    data-original="{{ item.고시가 }}"
+                                    data-mode="origin"
+                                    title="클릭 → 낱장가격(/500)">
+                                    <span class="price-toggle">{{ item.고시가 }}</span>
+                                </td>
+                                <td class="p-3 text-center text-slate-500 whitespace-nowrap">
+                                    <div class="cell-truncate">{{ item.시트명 }}</div>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <a href="{{ item.url }}"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       onclick="event.stopPropagation()"
+                                       class="inline-flex items-center justify-center w-8 h-8 bg-slate-100 rounded-lg text-blue-600 hover:bg-blue-100">🔗</a>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -137,6 +328,18 @@
         let currentSortCol = -1;
         let isAsc = true;
 
+        function getFavStorageKey() {
+            return 'paper_pro_global_favs';
+        }
+
+        function getCurrentFavorites() {
+            return JSON.parse(localStorage.getItem(getFavStorageKey()) || '[]');
+        }
+
+        function saveCurrentFavorites(favs) {
+            localStorage.setItem(getFavStorageKey(), JSON.stringify(favs));
+        }
+
         function setMode(m) {
             mode = m;
             document.querySelectorAll('.mode-btn').forEach(el => el.classList.remove('active'));
@@ -148,7 +351,9 @@
             const d = el.dataset;
             document.getElementById('hidden_thick').value = d.thick;
             document.getElementById('selected_info').innerText = `${d.name} ${d.gram}g | ${d.size || ''}`;
-            document.getElementById('fav_price_display').innerText = `${d.price}원`;
+            const rawPrice = parseFloat(String(d.price).replace(/,/g, '')) || 0;
+            const per500 = Math.round(rawPrice / 500);
+            document.getElementById('fav_price_display').innerText = `${d.price}원  →  낱장: ${per500.toLocaleString()}원`;
             calc();
         }
 
@@ -199,6 +404,7 @@
                 document.getElementById('final_formula').innerText =
                     `규격 : ${totalW} × ${totalH}mm  (가로: ${bleed}+${boardW}+${joint}+${spine}+${joint}+${boardW}+${bleed} / 세로: ${bleed}+${innerH}+${bleed})`;
             }
+
             draw(bleed, boardW, joint, spine, h);
         }
 
@@ -226,11 +432,13 @@
                 x += cw;
             };
 
-            box(bleed, "여분", "#fee2e2", true); box(board, "보드", "#f1f5f9");
+            box(bleed, "여분", "#fee2e2", true);
+            box(board, "보드", "#f1f5f9");
             if (joint > 0) box(joint, "홈", "#f8fafc");
             box(spine || 0, "세네카", "#ffffff");
             if (joint > 0) box(joint, "홈", "#f8fafc");
-            box(board, "보드", "#f1f5f9"); box(bleed, "여분", "#fee2e2", true);
+            box(board, "보드", "#f1f5f9");
+            box(bleed, "여분", "#fee2e2", true);
         }
 
         function sortTable(colIdx, type) {
@@ -238,8 +446,8 @@
             const rows  = Array.from(tbody.querySelectorAll("tr"));
             if (currentSortCol === colIdx) isAsc = !isAsc; else { isAsc = true; currentSortCol = colIdx; }
             rows.sort((a, b) => {
-                let vA = a.cells[colIdx].innerText.replace(/,/g, '').trim();
-                let vB = b.cells[colIdx].innerText.replace(/,/g, '').trim();
+                let vA = a.cells[colIdx].innerText.replace(/,/g, '').replace(/μm/g, '').replace(/\\(낱장\\)/g, '').trim();
+                let vB = b.cells[colIdx].innerText.replace(/,/g, '').replace(/μm/g, '').replace(/\\(낱장\\)/g, '').trim();
                 return type === 'num' ? (parseFloat(vA) - parseFloat(vB)) * (isAsc ? 1 : -1) : vA.localeCompare(vB) * (isAsc ? 1 : -1);
             });
             rows.forEach(r => tbody.appendChild(r));
@@ -247,81 +455,123 @@
 
         function handleFavorite(e, btn) {
             e.stopPropagation();
-            const d   = btn.closest('tr').dataset;
-            let favs  = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            const d = btn.closest('tr').dataset;
+            let favs = getCurrentFavorites();
+
             const idx = favs.findIndex(f => f.id === d.id);
+
             if (idx > -1) {
                 favs.splice(idx, 1);
-                btn.classList.remove('active');
             } else {
-                favs.push({ id: d.id, name: d.name, thick: d.thick, gram: d.gram, price: d.price, color: d.color, size: d.size });
-                btn.classList.add('active');
+                favs.push({
+                    id: d.id,
+                    name: d.name,
+                    thick: d.thick,
+                    gram: d.gram,
+                    price: d.price,
+                    color: d.color,
+                    size: d.size
+                });
             }
-            localStorage.setItem('paper_favs', JSON.stringify(favs));
+
+            saveCurrentFavorites(favs);
             renderFavorites();
         }
 
         function renderFavorites() {
-            const bar  = document.getElementById('favorites_bar');
+            const bar = document.getElementById('favorites_bar');
             if (!bar) return;
-            const favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+
+            const favs = getCurrentFavorites();
 
             const clearBtn = favs.length > 0
-                ? `<div class="flex justify-end">
-                       <button onclick="clearAllFavorites()"
-                           class="text-xs text-red-400 hover:text-red-600 font-bold px-3 py-1 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 transition">
-                           🗑 전체 삭제
-                       </button>
+                ? `<div class="flex justify-between items-center mb-3">
+                       <span class="text-xs font-bold text-slate-400">즐겨찾기 목록</span>
+                       <button type="button" onclick="clearAllFavorites()" class="text-[10px] text-red-400 hover:underline">모두 삭제</button>
                    </div>`
-                : '';
+                : '<div class="text-xs font-bold text-slate-400">즐겨찾기 목록</div>';
 
-            bar.innerHTML = clearBtn + favs.map(f => `
-                <div onclick="quickDisplay('${f.thick}', '${f.name}', '${f.gram}', '${f.price}', '${f.color}', '${f.size}')"
-                     class="flex items-center gap-3 px-4 py-3 bg-white border-2 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300">
-                    <span class="text-yellow-400 text-lg" onclick="removeFavoriteFromBar(event, '${f.id}')">★</span>
-                    <div class="flex flex-col">
-                        <span class="text-sm font-bold text-slate-700">${f.name} ${f.gram}g</span>
-                        <span class="text-[11px] text-slate-400">${f.color || ''} | ${f.size || ''}</span>
-                    </div>
-                    <span class="ml-auto text-sm font-bold text-blue-500">${f.price}원</span>
+            bar.innerHTML = clearBtn + `
+                <div class="fav-list-grid">
+                    ${favs.map(f => `
+                        <div onclick="quickDisplay('${f.thick}', '${escapeQuotes(f.name)}', '${f.gram}', '${f.price}', '${escapeQuotes(f.size || '')}')"
+                             class="fav-item-card group flex items-start gap-3 px-4 py-3 bg-white border-2 border-slate-100 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300 transition-all">
+                            <button type="button"
+                                    class="text-yellow-400 text-lg shrink-0 hover:scale-120 transition-transform"
+                                    onclick="removeFavoriteById(event, '${f.id}')">★</button>
+                            <div class="flex flex-col min-w-0 flex-1">
+                                <span class="text-sm font-bold text-slate-700 fav-text-wrap">${f.name} ${f.gram}g</span>
+                                <span class="text-[11px] text-slate-400 fav-text-wrap">${f.color || ''} | ${f.size || ''}</span>
+                            </div>
+                            <span class="text-sm font-bold text-blue-500 whitespace-nowrap shrink-0">${f.price}원</span>
+                        </div>
+                    `).join('')}
                 </div>
-            `).join('');
+            `;
 
             document.querySelectorAll('#resultTable tbody tr').forEach(row => {
                 const starBtn = row.querySelector('.fav-star');
-                if (starBtn) {
-                    if (favs.find(f => f.id === row.dataset.id)) {
-                        starBtn.classList.add('active');
-                    } else {
-                        starBtn.classList.remove('active');
-                    }
+                if (!starBtn) return;
+
+                const isMatched = favs.some(f => f.id === row.dataset.id);
+                if (isMatched) {
+                    starBtn.classList.add('active');
+                } else {
+                    starBtn.classList.remove('active');
                 }
             });
         }
 
-        function removeFavoriteFromBar(e, id) {
+        function removeFavoriteById(e, id) {
             e.stopPropagation();
-            let favs = JSON.parse(localStorage.getItem('paper_favs') || '[]');
+            let favs = getCurrentFavorites();
             favs = favs.filter(f => f.id !== id);
-            localStorage.setItem('paper_favs', JSON.stringify(favs));
+            saveCurrentFavorites(favs);
             renderFavorites();
         }
 
         function clearAllFavorites() {
-            if (!confirm('즐겨찾기를 전체 삭제할까요?')) return;
-            localStorage.removeItem('paper_favs');
+            if (!confirm('모든 즐겨찾기를 삭제할까요?')) return;
+            localStorage.removeItem(getFavStorageKey());
             renderFavorites();
         }
 
-        function quickDisplay(thick, name, gram, price, color, size) {
+        function escapeQuotes(str) {
+            return String(str).replace(/'/g, "\\\\\\\\\\\\\\\\'");
+        }
+
+        function quickDisplay(thick, name, gram, price, size) {
             document.getElementById('hidden_thick').value = thick;
             document.getElementById('selected_info').innerText = `${name} ${gram}g | ${size || ''}`;
-            document.getElementById('fav_price_display').innerText = `${price}원`;
+            const rawPrice = parseFloat(String(price).replace(/,/g, '')) || 0;
+            const per500 = Math.round(rawPrice / 500);
+            document.getElementById('fav_price_display').innerText = `${price}원  →  낱장: ${per500.toLocaleString()}원`;
             calc();
         }
 
-        window.onload = () => { renderFavorites(); calc(); };
-        window.onresize = () => { calc(); };
+        function togglePrice(td, originalPrice) {
+            const span = td.querySelector('.price-toggle');
+            if (td.dataset.mode === 'origin') {
+                const raw = parseFloat(String(originalPrice).replace(/,/g, '')) || 0;
+                const per500 = Math.round(raw / 500);
+                span.textContent = per500.toLocaleString() + '원 (낱장)';
+                td.dataset.mode = 'per500';
+                span.classList.add('per-sheet');
+            } else {
+                span.textContent = originalPrice + '원';
+                td.dataset.mode = 'origin';
+                span.classList.remove('per-sheet');
+            }
+        }
+
+        window.onload = () => {
+            renderFavorites();
+            calc();
+        };
+
+        window.onresize = () => {
+            calc();
+        };
     </script>
 </body>
 </html>
