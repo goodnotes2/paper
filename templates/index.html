@@ -175,8 +175,8 @@
                                 data-price="{{ item.고시가 }}" data-color="{{ item.색상 }}" data-size="{{ item.사이즈 }}"
                                 onclick="selectRow(this)">
                                 <td class="p-3 text-center"><button onclick="handleFavorite(event, this)" class="fav-star text-xl">★</button></td>
-                                <td class="p-3 font-bold text-slate-900 text-center"><div class="color-wrap">{{ item.품목 }}</div></td>
-                                <td class="p-3 text-slate-600 text-center"><div class="color-wrap">{{ item.사이즈 }}</div></td>
+                                <td class="p-3 font-bold text-slate-900"><div class="cell-truncate">{{ item.품목 }}</div></td>
+                                <td class="p-3 text-center text-slate-600 whitespace-nowrap"><div class="cell-truncate">{{ item.사이즈 }}</div></td>
                                 <td class="p-3 text-center font-bold text-slate-600 whitespace-nowrap">{{ item.평량 }}</td>
                                 <td class="p-3 text-center text-slate-600"><div class="color-wrap">{{ item.색상 }}</div></td>
                                 <td class="p-3 text-center font-bold text-blue-600 whitespace-nowrap">{{ item.두께 }}μm</td>
