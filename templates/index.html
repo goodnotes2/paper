@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>도서 제작 및 책등(세네카) 계산기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 기본 배경 및 UI 폰트 세팅 */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f6f9;
@@ -15,18 +15,16 @@
             justify-content: center;
         }
 
-        /* 메인 컨테이너 구조 */
         .calculator-container {
             background-color: #ffffff;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            width: 1000px;
+            width: 1100px; /* 캔버스 공간 확보를 위해 너비 최적화 */
             padding: 30px;
             display: flex;
             gap: 25px;
         }
 
-        /* 왼쪽 입력 및 계산 폼 영역 */
         .left-panel {
             flex: 1.2;
             display: flex;
@@ -34,7 +32,6 @@
             gap: 15px;
         }
 
-        /* 오른쪽 검은색 종이 빠른 선택 패널 영역 */
         .right-panel {
             flex: 1.8;
             background-color: #1a1a1a;
@@ -55,7 +52,6 @@
         .left-panel h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; }
         .right-panel h3 { color: #f1c40f; border-bottom: 1px solid #444; padding-bottom: 8px; }
 
-        /* 입력 필드 스타일 그룹 */
         .input-group {
             display: flex;
             flex-direction: column;
@@ -81,7 +77,6 @@
             border-color: #3498db;
         }
 
-        /* 기존 세네카 결과 표기창 */
         .result-box {
             background-color: #e8f4fd;
             border-left: 5px solid #3498db;
@@ -96,7 +91,23 @@
             color: #2c3e50;
         }
 
-        /* ⭐ 기존 즐겨찾기 UI 스타일 (완벽 복원) */
+        /* 🟢 복원된 도면 캔버스 컨테이너 스타일 */
+        .canvas-container {
+            margin-top: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        #bookCanvas {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            max-width: 100%;
+        }
+
         .bookmark-section {
             margin-top: 15px;
             padding-top: 15px;
@@ -131,6 +142,7 @@
             margin-bottom: 5px;
             font-size: 13px;
             cursor: pointer;
+            color: #333;
         }
         .bookmark-item:hover { background: #e9ecef; }
         .delete-bookmark {
@@ -141,7 +153,6 @@
             font-weight: bold;
         }
 
-        /* 우측 패널 지종 선택 토글 버튼 배치 */
         .paper-buttons {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -173,7 +184,6 @@
             font-weight: bold;
         }
 
-        /* 축소 및 슬림화 완료된 우측 마스터 테이블 스타일 */
         .paper-table-container {
             flex: 1;
             overflow-y: auto;
@@ -247,6 +257,10 @@
             <div class="spine-value" id="spineResult">0.00 mm</div>
         </div>
 
+        <div class="canvas-container">
+            <canvas id="bookCanvas" width="300" height="150"></canvas>
+        </div>
+
         <div class="bookmark-section">
             <button class="bookmark-btn" onclick="addBookmark()">★ 현재 설정 즐겨찾기 추가</button>
             <ul id="bookmarkList" class="bookmark-list"></ul>
@@ -285,7 +299,6 @@
 </div>
 
 <script>
-    // 질문자님이 제공해주신 순도 100% 실무 고시가 및 두께 연동용 마스터 데이터셋
     const paperMasterData = {
         art_snow: [
             { name: "아트지/스노우지", weight: "80g",  val1: "87,140원",  val2: "60,530원",  thickness: 73 },
@@ -349,7 +362,6 @@
         ]
     };
 
-    // 지종 토글 버튼 변경 및 테이블 헤더 실무 스위칭 함수
     function switchPaperGroup(groupKey, buttonElement) {
         const buttons = document.querySelectorAll('.paper-btn');
         buttons.forEach(btn => btn.classList.remove('active'));
@@ -368,12 +380,7 @@
         const dataList = paperMasterData[groupKey];
         dataList.forEach(item => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${item.name}</td>
-                <td><strong style="color:#fff;">${item.weight}</strong></td>
-                <td>${item.val1}</td>
-                <td>${item.val2}</td>
-            `;
+            tr.innerHTML = '<td>' + item.name + '</td><td><strong style="color:#fff;">' + item.weight + '</strong></td><td>' + item.val1 + '</td><td>' + item.val2 + '</td>';
             
             tr.onclick = function() {
                 const rows = tbody.querySelectorAll('tr');
@@ -388,7 +395,7 @@
         });
     }
 
-    // 핵심 세네카 연동 계산 수식 로직
+    // 🟢 복원된 책등 계산 및 실시간 도면 동적 렌더링 함수
     function calculateSpine() {
         const pageCount = parseFloat(document.getElementById('pageCount').value) || 0;
         const thicknessMicron = parseFloat(document.getElementById('paperThickness').value) || 0;
@@ -398,26 +405,61 @@
 
         if (spineThickness > 0 && pageCount > 0) {
             document.getElementById('spineResult').innerText = spineThickness.toFixed(2) + " mm";
+            drawBookDiagram(spineThickness); // 책 두께 수치 변화에 맞춰 캔버스 즉시 갱신
         } else {
             document.getElementById('spineResult').innerText = "0.00 mm";
+            drawBookDiagram(0);
         }
     }
 
-    // ⭐ 기존 즐겨찾기 스크립트 로직 (완벽 보존)
+    // 🟢 완전히 복구해낸 원본 캔버스 가동 로직
+    function drawBookDiagram(spineMm) {
+        const canvas = document.getElementById('bookCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 기본 책 형상 계산 스케일링 비율
+        const baseWidth = 80;
+        const dynamicSpineWidth = Math.max(10, Math.min(100, spineMm * 4)); 
+
+        ctx.lineWidth = 2;
+
+        // 1. 앞표지 그리기
+        ctx.fillStyle = "#34495e";
+        ctx.fillRect(50, 20, baseWidth, 110);
+        ctx.strokeStyle = "#2c3e50";
+        ctx.strokeRect(50, 20, baseWidth, 110);
+
+        // 2. 책등(세네카) 동적 시각화
+        ctx.fillStyle = "#3498db";
+        ctx.fillRect(50 + baseWidth, 20, dynamicSpineWidth, 110);
+        ctx.strokeRect(50 + baseWidth, 20, dynamicSpineWidth, 110);
+
+        // 3. 뒤표지 그리기
+        ctx.fillStyle = "#2c3e50";
+        ctx.fillRect(50 + baseWidth + dynamicSpineWidth, 20, baseWidth, 110);
+        ctx.strokeRect(50 + baseWidth + dynamicSpineWidth, 20, baseWidth, 110);
+
+        // 4. 세네카 두께가 존재할 때 텍스트 크기 가이드라인 노출
+        if(spineMm > 0) {
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 11px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(spineMm.toFixed(1) + "mm", 50 + baseWidth + (dynamicSpineWidth / 2), 75);
+        }
+    }
+
     function loadBookmarks() {
         const bookmarks = JSON.parse(localStorage.getItem('spineBookmarks')) || [];
         const listEl = document.getElementById('bookmarkList');
+        if(!listEl) return;
         listEl.innerHTML = '';
         
         bookmarks.forEach((b, index) => {
             const li = document.createElement('li');
             li.className = 'bookmark-item';
-            li.innerHTML = `
-                <span onclick="applyBookmark(${b.page}, ${b.thick}, ${b.cover})">
-                    📄 ${b.page}p / 📐 ${b.thick}μm / 📔 ${b.cover}mm → <strong>${b.result}</strong>
-                </span>
-                <button class="delete-bookmark" onclick="deleteBookmark(${index}); event.stopPropagation();">×</button>
-            `;
+            li.innerHTML = '<span onclick="applyBookmark(' + b.page + ',' + b.thick + ',' + b.cover + ')">📄 ' + b.page + 'p / 📐 ' + b.thick + 'μm / 📔 ' + b.cover + 'mm → <strong>' + b.result + '</strong></span><button class="delete-bookmark" onclick="deleteBookmark(' + index + '); event.stopPropagation();">×</button>';
             listEl.appendChild(li);
         });
     }
@@ -448,12 +490,13 @@
         calculateSpine();
     }
 
-    // 앱 구동 시 초기 기본 실행값 및 즐겨찾기 로드
     window.onload = function() {
         const defaultBtn = document.querySelector('.paper-btn');
-        switchPaperGroup('art_snow', defaultBtn);
+        if(defaultBtn) {
+            switchPaperGroup('art_snow', defaultBtn);
+        }
         calculateSpine();
-        loadBookmarks(); // 즐겨찾기 목록 연동 실행
+        loadBookmarks();
     };
 </script>
 
