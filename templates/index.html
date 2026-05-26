@@ -117,28 +117,14 @@
 
                 <div class="p-5 glass-card bg-white border border-slate-200 shadow-sm">
                     <span class="text-[11px] font-bold tracking-wider text-slate-400 mb-3 block">지종별 빠른 단가표</span>
-                    <div class="flex flex-wrap gap-2 mb-3">
+                    <div class="flex flex-wrap gap-2">
                         <button onclick="showQuickTable('백색모조')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">백색모조</button>
                         <button onclick="showQuickTable('미색모조')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">미색모조</button>
                         <button onclick="showQuickTable('아르떼 UW/NW')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">아르떼 UW/NW</button>
                         <button onclick="showQuickTable('랑데뷰 내추럴')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">랑데뷰 내추럴</button>
                         <button onclick="showQuickTable('랑데뷰 울트라화이트')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">랑데뷰 UW</button>
                         <button onclick="showQuickTable('도화지')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">도화지</button>
-                        <button onclick="showQuickTable('아트지/스노우지')" class="px-3 py-1.5 bg-slate-50 text-slate-600 font-bold text-xs rounded-lg hover:bg-slate-100 transition border border-slate-200 shadow-sm">아트지/스노우지</button>
-                    </div>
-                    <div id="quick_table_container" class="hidden overflow-hidden rounded-xl border border-slate-200 mt-2">
-                        <table class="w-full text-center text-xs border-collapse">
-                            <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
-                                <tr>
-                                    <th class="p-2 font-bold border-r border-slate-200">지종</th>
-                                    <th class="p-2 font-bold border-r border-slate-200">평량</th>
-                                    <th id="quick_table_th_3" class="p-2 font-bold border-r border-slate-200">4*6판</th>
-                                    <th class="p-2 font-bold">국전</th>
-                                </tr>
-                            </thead>
-                            <tbody id="quick_table_body" class="text-slate-700 bg-white divide-y divide-slate-100">
-                            </tbody>
-                        </table>
+                        <button onclick="showQuickTable('아트지/스노우지')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">아트지/스노우지</button>
                     </div>
                 </div>
             </div>
@@ -166,9 +152,32 @@
                 <div class="glass-card p-4">
                     <form method="POST" class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
                         <input type="text" name="keyword" value="{{ keyword }}" placeholder="검색어를 입력하세요 (예: 메탈)"
+                               onfocus="hideQuickTable()"
                                class="flex-1 p-4 rounded-2xl outline-none border-2 border-slate-200 focus:border-blue-500 text-base md:text-lg">
                         <button type="submit" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shrink-0 min-w-[120px] text-lg hover:bg-blue-700 transition">검색</button>
                     </form>
+                </div>
+
+                <div id="quick_table_container" class="hidden glass-card overflow-hidden">
+                    <div class="bg-blue-50 border-b border-blue-100 p-3 md:p-4 flex justify-between items-center">
+                        <span class="font-bold text-blue-800 text-sm md:text-base">⚡ 빠른 단가표 결과</span>
+                        <button type="button" onclick="hideQuickTable()" class="text-blue-400 hover:text-blue-600 font-bold text-2xl leading-none" title="닫기">&times;</button>
+                    </div>
+                    <table class="w-full text-center text-sm md:text-base result-table">
+                        <colgroup>
+                            <col style="width:25%;"><col style="width:25%;"><col style="width:25%;"><col style="width:25%;">
+                        </colgroup>
+                        <thead class="bg-slate-50 border-b text-[12px] md:text-sm text-slate-500 font-bold">
+                            <tr>
+                                <th class="p-3 md:p-4 border-r border-slate-200">지종</th>
+                                <th class="p-3 md:p-4 border-r border-slate-200">평량</th>
+                                <th id="quick_table_th_3" class="p-3 md:p-4 border-r border-slate-200">4*6판</th>
+                                <th class="p-3 md:p-4">국전</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quick_table_body" class="text-slate-700 bg-white divide-y divide-slate-100">
+                        </tbody>
+                    </table>
                 </div>
 
                 <div id="favorites_bar" class="glass-card p-4"></div>
@@ -305,7 +314,14 @@
             '아트지/스노우지': {
                 header: '4*6판',
                 data: [
-                    { gram: '-', val1: '데이터 준비중', val2: '데이터 준비중' }
+                    { gram: '80g', val1: '87,140원', val2: '60,530원' },
+                    { gram: '100g', val1: '88,000원', val2: '61,130원' },
+                    { gram: '120g', val1: '105,590원', val2: '73,350원' },
+                    { gram: '150g', val1: '134,290원', val2: '111,940원' },
+                    { gram: '180g', val1: '161,150원', val2: '124,380원' },
+                    { gram: '200g', val1: '179,050원', val2: '124,380원' },
+                    { gram: '250g', val1: '223,810원', val2: '155,470원' },
+                    { gram: '300g', val1: '268,580원', val2: '186,570원' }
                 ]
             }
         };
@@ -322,15 +338,23 @@
             let rowsHTML = '';
             quickTableData[type].data.forEach(function(item) {
                 rowsHTML += '<tr class="hover:bg-slate-50 transition-colors">' +
-                            '<td class="p-2 border-r border-slate-100 font-bold">' + type + '</td>' +
-                            '<td class="p-2 border-r border-slate-100 text-slate-600">' + item.gram + '</td>' +
-                            '<td class="p-2 border-r border-slate-100 font-bold text-blue-600">' + item.val1 + '</td>' +
-                            '<td class="p-2 font-bold text-blue-600">' + item.val2 + '</td>' +
+                            '<td class="p-3 md:p-4 border-r border-slate-100 font-bold text-slate-800">' + type + '</td>' +
+                            '<td class="p-3 md:p-4 border-r border-slate-100 text-slate-600 font-bold">' + item.gram + '</td>' +
+                            '<td class="p-3 md:p-4 border-r border-slate-100 font-bold text-blue-600">' + item.val1 + '</td>' +
+                            '<td class="p-3 md:p-4 font-bold text-blue-600">' + item.val2 + '</td>' +
                             '</tr>';
             });
             
             tbody.innerHTML = rowsHTML;
             container.classList.remove('hidden');
+            
+            // 표가 나타날 때 자동으로 화면을 표 위치로 부드럽게 스크롤
+            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // 검색창 클릭 시 빠른 단가표 숨기기 함수
+        function hideQuickTable() {
+            document.getElementById('quick_table_container').classList.add('hidden');
         }
 
         function togglePanel(which) {
