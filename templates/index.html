@@ -114,6 +114,33 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="p-5 glass-card bg-white border border-slate-200 shadow-sm">
+                    <span class="text-[11px] font-bold tracking-wider text-slate-400 mb-3 block">지종별 빠른 단가표</span>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <button onclick="showQuickTable('백색모조')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">백색모조</button>
+                        <button onclick="showQuickTable('미색모조')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">미색모조</button>
+                        <button onclick="showQuickTable('아르떼 UW/NW')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">아르떼 UW/NW</button>
+                        <button onclick="showQuickTable('랑데뷰 내추럴')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">랑데뷰 내추럴</button>
+                        <button onclick="showQuickTable('랑데뷰 울트라화이트')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">랑데뷰 UW</button>
+                        <button onclick="showQuickTable('도화지')" class="px-3 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm">도화지</button>
+                        <button onclick="showQuickTable('아트지/스노우지')" class="px-3 py-1.5 bg-slate-50 text-slate-600 font-bold text-xs rounded-lg hover:bg-slate-100 transition border border-slate-200 shadow-sm">아트지/스노우지</button>
+                    </div>
+                    <div id="quick_table_container" class="hidden overflow-hidden rounded-xl border border-slate-200 mt-2">
+                        <table class="w-full text-center text-xs border-collapse">
+                            <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                                <tr>
+                                    <th class="p-2 font-bold border-r border-slate-200">지종</th>
+                                    <th class="p-2 font-bold border-r border-slate-200">평량</th>
+                                    <th id="quick_table_th_3" class="p-2 font-bold border-r border-slate-200">4*6판</th>
+                                    <th class="p-2 font-bold">국전</th>
+                                </tr>
+                            </thead>
+                            <tbody id="quick_table_body" class="text-slate-700 bg-white divide-y divide-slate-100">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <div class="results-zone space-y-4">
@@ -205,6 +232,106 @@
         let mode = 'soft';
         let currentSortCol = -1;
         let isAsc = true;
+
+        const quickTableData = {
+            '백색모조': {
+                header: '4*6판',
+                data: [
+                    { gram: '70g', val1: '65,010원', val2: '45,160원' },
+                    { gram: '80g', val1: '71,400원', val2: '49,600원' },
+                    { gram: '100g', val1: '88,470원', val2: '61,460원' },
+                    { gram: '120g', val1: '106,160원', val2: '73,750원' },
+                    { gram: '150g', val1: '132,700원', val2: '92,180원' },
+                    { gram: '180g', val1: '159,240원', val2: '110,620원' },
+                    { gram: '220g', val1: '203,370원', val2: '141,270원' },
+                    { gram: '260g', val1: '240,340원', val2: '166,960원' }
+                ]
+            },
+            '미색모조': {
+                header: '4*6판',
+                data: [
+                    { gram: '70g', val1: '66,960원', val2: '46,820원' },
+                    { gram: '80g', val1: '73,540원', val2: '51,090원' },
+                    { gram: '100g', val1: '91,130원', val2: '63,300원' },
+                    { gram: '120g', val1: '109,350원', val2: '75,960원' }
+                ]
+            },
+            '아르떼 UW/NW': {
+                header: '4*6판',
+                data: [
+                    { gram: '105g', val1: '165,870원', val2: '115,230원' },
+                    { gram: '130g', val1: '205,360원', val2: '142,650원' },
+                    { gram: '160g', val1: '254,760원', val2: '175,580원' },
+                    { gram: '190g', val1: '300,140원', val2: '208,500원' },
+                    { gram: '210g', val1: '331,740원', val2: '230,440원' },
+                    { gram: '230g', val1: '363,330원', val2: '252,390원' },
+                    { gram: '310g', val1: '489,710원', val2: '340,180원' }
+                ]
+            },
+            '랑데뷰 내추럴': {
+                header: '4*6판',
+                data: [
+                    { gram: '105g', val1: '197,010원', val2: '136,860원' },
+                    { gram: '130g', val1: '243,920원', val2: '169,440원' },
+                    { gram: '160g', val1: '300,210원', val2: '208,540원' },
+                    { gram: '190g', val1: '356,500원', val2: '247,650원' },
+                    { gram: '210g', val1: '394,030원', val2: '273,710원' },
+                    { gram: '240g', val1: '450,320원', val2: '312,820원' }
+                ]
+            },
+            '랑데뷰 울트라화이트': {
+                header: '4*6판',
+                data: [
+                    { gram: '105g', val1: '197,010원', val2: '136,860원' },
+                    { gram: '130g', val1: '243,920원', val2: '169,440원' },
+                    { gram: '160g', val1: '300,210원', val2: '208,540원' },
+                    { gram: '190g', val1: '356,500원', val2: '247,650원' },
+                    { gram: '210g', val1: '394,030원', val2: '273,710원' },
+                    { gram: '240g', val1: '450,320원', val2: '312,820원' },
+                    { gram: '310g', val1: '- 원', val2: '404,050원' }
+                ]
+            },
+            '도화지': {
+                header: '1060*757',
+                data: [
+                    { gram: '105g', val1: '91,370원', val2: '0원' },
+                    { gram: '130g', val1: '113,130원', val2: '0원' },
+                    { gram: '170g', val1: '147,940원', val2: '0원' },
+                    { gram: '180g', val1: '156,640원', val2: '0원' },
+                    { gram: '200g(미색)', val1: '248,850원', val2: '0원' },
+                    { gram: '220g', val1: '273,740원', val2: '0원' }
+                ]
+            },
+            '아트지/스노우지': {
+                header: '4*6판',
+                data: [
+                    { gram: '-', val1: '데이터 준비중', val2: '데이터 준비중' }
+                ]
+            }
+        };
+
+        function showQuickTable(type) {
+            const container = document.getElementById('quick_table_container');
+            const tbody = document.getElementById('quick_table_body');
+            const th3 = document.getElementById('quick_table_th_3');
+            
+            if (!quickTableData[type]) return;
+
+            th3.innerText = quickTableData[type].header;
+
+            let rowsHTML = '';
+            quickTableData[type].data.forEach(function(item) {
+                rowsHTML += '<tr class="hover:bg-slate-50 transition-colors">' +
+                            '<td class="p-2 border-r border-slate-100 font-bold">' + type + '</td>' +
+                            '<td class="p-2 border-r border-slate-100 text-slate-600">' + item.gram + '</td>' +
+                            '<td class="p-2 border-r border-slate-100 font-bold text-blue-600">' + item.val1 + '</td>' +
+                            '<td class="p-2 font-bold text-blue-600">' + item.val2 + '</td>' +
+                            '</tr>';
+            });
+            
+            tbody.innerHTML = rowsHTML;
+            container.classList.remove('hidden');
+        }
 
         function togglePanel(which) {
             const toggle = document.getElementById(which + 'Toggle');
@@ -355,7 +482,6 @@
                 ? '<div class="flex justify-between items-center mb-3"><span class="text-xs font-bold text-slate-400">즐겨찾기 목록</span><button type="button" onclick="clearAllFavorites()" class="text-[10px] text-red-400 hover:underline">모두 삭제</button></div>'
                 : '<div class="text-xs font-bold text-slate-400">즐겨찾기 목록</div>';
             
-            // 따옴표 오류를 수정한 부분입니다.
             var cards = favs.map(function(f) {
                 var safeName = escapeQuotes(f.name);
                 var safeSize = escapeQuotes(f.size || '');
@@ -390,7 +516,6 @@
             renderFavorites();
         }
 
-        // 따옴표 이스케이프 함수 (이전 코드를 안전하게 수정했습니다)
         function escapeQuotes(str) {
             if (!str) return '';
             return String(str).replace(/'/g, "\\'").replace(/"/g, "&quot;");
