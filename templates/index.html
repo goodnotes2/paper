@@ -496,6 +496,9 @@
             renderFavorites();
         }
 
+        // ==========================================
+        // 여기서부터 완전히 새롭게 바뀐 렌더링 로직입니다!
+        // ==========================================
         function renderFavorites() {
             var bar = document.getElementById('favorites_bar');
             if (!bar) return;
@@ -505,15 +508,17 @@
                 : '<div class="text-xs font-bold text-slate-400">즐겨찾기 목록</div>';
             
             var cards = favs.map(function(f) {
-                var safeId = escapeQuotes(f.id);
-                var safeName = escapeQuotes(f.name);
-                var safeThick = escapeQuotes(f.thick);
-                var safeGram = escapeQuotes(f.gram);
-                var safePrice = escapeQuotes(f.price);
-                var safeSize = escapeQuotes(f.size || '');
+                // 어떤 특수기호가 들어와도 안전하게 HTML 속성(data-*)에 넣기 위해 치환합니다.
+                var safeId = (f.id || '').replace(/"/g, '&quot;');
+                var safeName = (f.name || '').replace(/"/g, '&quot;');
+                var safeThick = (f.thick || '').replace(/"/g, '&quot;');
+                var safeGram = (f.gram || '').replace(/"/g, '&quot;');
+                var safePrice = (f.price || '').replace(/"/g, '&quot;');
+                var safeSize = (f.size || '').replace(/"/g, '&quot;');
 
-                return '<div onclick="quickDisplay(\''+ safeThick +'\', \''+ safeName +'\', \''+ safeGram +'\', \''+ safePrice +'\', \''+ safeSize +'\')" class="fav-item-card group flex items-start gap-3 px-4 py-3 bg-white border-2 border-slate-100 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300 transition-all">' +
-                       '<button type="button" class="text-yellow-400 text-lg shrink-0" onclick="removeFavoriteById(event, \''+ safeId +'\')">★</button>' +
+                // onclick 안에 문자열을 넣지 않고, 데이터를 담은 뒤 별도의 함수(quickDisplayFromCard)를 호출합니다.
+                return '<div data-thick="'+safeThick+'" data-name="'+safeName+'" data-gram="'+safeGram+'" data-price="'+safePrice+'" data-size="'+safeSize+'" onclick="quickDisplayFromCard(this)" class="fav-item-card group flex items-start gap-3 px-4 py-3 bg-white border-2 border-slate-100 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300 transition-all">' +
+                       '<button type="button" class="text-yellow-400 text-lg shrink-0" data-id="'+safeId+'" onclick="removeFavoriteFromCard(event, this)">★</button>' +
                        '<div class="flex flex-col min-w-0 flex-1">' +
                        '<span class="text-sm font-bold text-slate-700 fav-text-wrap">'+ f.name +' '+ f.gram +'g</span>' +
                        '<span class="text-[11px] text-slate-400 fav-text-wrap">'+ (f.color || '') +' | '+ (f.size || '') +'</span>' +
@@ -530,22 +535,29 @@
             });
         }
 
-        function removeFavoriteById(e, id) {
+        // 새롭게 추가된 삭제 전용 함수 (안전하게 ID를 빼옵니다)
+        function removeFavoriteFromCard(e, btn) {
             e.stopPropagation();
+            var id = btn.getAttribute('data-id');
             var favs = getCurrentFavorites().filter(function(f) { return f.id !== id; });
             saveCurrentFavorites(favs);
             renderFavorites();
+        }
+
+        // 새롭게 추가된 카드 클릭 함수 (안전하게 데이터를 빼옵니다)
+        function quickDisplayFromCard(card) {
+            var thick = card.getAttribute('data-thick');
+            var name = card.getAttribute('data-name');
+            var gram = card.getAttribute('data-gram');
+            var price = card.getAttribute('data-price');
+            var size = card.getAttribute('data-size');
+            quickDisplay(thick, name, gram, price, size);
         }
 
         function clearAllFavorites() {
             if (!confirm('모든 즐겨찾기를 삭제할까요?')) return;
             localStorage.removeItem(getFavStorageKey());
             renderFavorites();
-        }
-
-        function escapeQuotes(str) {
-            if (!str) return '';
-            return String(str).replace(/'/g, "\\'").replace(/"/g, "&quot;");
         }
 
         function quickDisplay(thick, name, gram, price, size) {
