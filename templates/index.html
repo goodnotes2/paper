@@ -160,7 +160,7 @@
 
                 <div id="quick_table_container" class="hidden glass-card overflow-hidden">
                     <div class="bg-blue-50 border-b border-blue-100 p-3 md:p-4 flex justify-between items-center">
-                        <span class="font-bold text-blue-800 text-sm md:text-base">⚡ 빠른 단가표 결과</span>
+                        <span class="font-bold text-blue-800 text-sm md:text-base">⚡ 빠른 단가표 결과 (표의 줄을 클릭하면 세네카가 계산됩니다)</span>
                         <button type="button" onclick="hideQuickTable()" class="text-blue-400 hover:text-blue-600 font-bold text-2xl leading-none" title="닫기">&times;</button>
                     </div>
                     <table class="w-full text-center text-sm md:text-base result-table">
@@ -246,82 +246,82 @@
             '백색모조': {
                 header: '4*6판',
                 data: [
-                    { gram: '70g', val1: '65,010원', val2: '45,160원' },
-                    { gram: '80g', val1: '71,400원', val2: '49,600원' },
-                    { gram: '100g', val1: '88,470원', val2: '61,460원' },
-                    { gram: '120g', val1: '106,160원', val2: '73,750원' },
-                    { gram: '150g', val1: '132,700원', val2: '92,180원' },
-                    { gram: '180g', val1: '159,240원', val2: '110,620원' },
-                    { gram: '220g', val1: '203,370원', val2: '141,270원' },
-                    { gram: '260g', val1: '240,340원', val2: '166,960원' }
+                    { gram: '70g', val1: '65,010원', val2: '45,160원', thick: '87' },
+                    { gram: '80g', val1: '71,400원', val2: '49,600원', thick: '94' },
+                    { gram: '100g', val1: '88,470원', val2: '61,460원', thick: '114' },
+                    { gram: '120g', val1: '106,160원', val2: '73,750원', thick: '135' },
+                    { gram: '150g', val1: '132,700원', val2: '92,180원', thick: '167' },
+                    { gram: '180g', val1: '159,240원', val2: '110,620원', thick: '201' },
+                    { gram: '220g', val1: '203,370원', val2: '141,270원', thick: '244' },
+                    { gram: '260g', val1: '240,340원', val2: '166,960원', thick: '285' }
                 ]
             },
             '미색모조': {
                 header: '4*6판',
                 data: [
-                    { gram: '70g', val1: '66,960원', val2: '46,820원' },
-                    { gram: '80g', val1: '73,540원', val2: '51,090원' },
-                    { gram: '100g', val1: '91,130원', val2: '63,300원' },
-                    { gram: '120g', val1: '109,350원', val2: '75,960원' }
+                    { gram: '70g', val1: '66,960원', val2: '46,820원', thick: '87' },
+                    { gram: '80g', val1: '73,540원', val2: '51,090원', thick: '94' },
+                    { gram: '100g', val1: '91,130원', val2: '63,300원', thick: '114' },
+                    { gram: '120g', val1: '109,350원', val2: '75,960원', thick: '135' }
                 ]
             },
             '아르떼 UW/NW': {
                 header: '4*6판',
                 data: [
-                    { gram: '105g', val1: '165,870원', val2: '115,230원' },
-                    { gram: '130g', val1: '205,360원', val2: '142,650원' },
-                    { gram: '160g', val1: '254,760원', val2: '175,580원' },
-                    { gram: '190g', val1: '300,140원', val2: '208,500원' },
-                    { gram: '210g', val1: '331,740원', val2: '230,440원' },
-                    { gram: '230g', val1: '363,330원', val2: '252,390원' },
-                    { gram: '310g', val1: '489,710원', val2: '340,180원' }
+                    { gram: '105g', val1: '165,870원', val2: '115,230원', thick: '149' },
+                    { gram: '130g', val1: '205,360원', val2: '142,650원', thick: '183' },
+                    { gram: '160g', val1: '254,760원', val2: '175,580원', thick: '223' },
+                    { gram: '190g', val1: '300,140원', val2: '208,500원', thick: '261' },
+                    { gram: '210g', val1: '331,740원', val2: '230,440원', thick: '286' },
+                    { gram: '230g', val1: '363,330원', val2: '252,390원', thick: '312' },
+                    { gram: '310g', val1: '489,710원', val2: '340,180원', thick: '0' }
                 ]
             },
             '랑데뷰 내추럴': {
                 header: '4*6판',
                 data: [
-                    { gram: '105g', val1: '197,010원', val2: '136,860원' },
-                    { gram: '130g', val1: '243,920원', val2: '169,440원' },
-                    { gram: '160g', val1: '300,210원', val2: '208,540원' },
-                    { gram: '190g', val1: '356,500원', val2: '247,650원' },
-                    { gram: '210g', val1: '394,030원', val2: '273,710원' },
-                    { gram: '240g', val1: '450,320원', val2: '312,820원' }
+                    { gram: '105g', val1: '197,010원', val2: '136,860원', thick: '140' },
+                    { gram: '130g', val1: '243,920원', val2: '169,440원', thick: '170' },
+                    { gram: '160g', val1: '300,210원', val2: '208,540원', thick: '210' },
+                    { gram: '190g', val1: '356,500원', val2: '247,650원', thick: '260' },
+                    { gram: '210g', val1: '394,030원', val2: '273,710원', thick: '300' },
+                    { gram: '240g', val1: '450,320원', val2: '312,820원', thick: '330' }
                 ]
             },
             '랑데뷰 울트라화이트': {
                 header: '4*6판',
                 data: [
-                    { gram: '105g', val1: '197,010원', val2: '136,860원' },
-                    { gram: '130g', val1: '243,920원', val2: '169,440원' },
-                    { gram: '160g', val1: '300,210원', val2: '208,540원' },
-                    { gram: '190g', val1: '356,500원', val2: '247,650원' },
-                    { gram: '210g', val1: '394,030원', val2: '273,710원' },
-                    { gram: '240g', val1: '450,320원', val2: '312,820원' },
-                    { gram: '310g', val1: '- 원', val2: '404,050원' }
+                    { gram: '105g', val1: '197,010원', val2: '136,860원', thick: '140' },
+                    { gram: '130g', val1: '243,920원', val2: '169,440원', thick: '170' },
+                    { gram: '160g', val1: '300,210원', val2: '208,540원', thick: '210' },
+                    { gram: '190g', val1: '356,500원', val2: '247,650원', thick: '260' },
+                    { gram: '210g', val1: '394,030원', val2: '273,710원', thick: '300' },
+                    { gram: '240g', val1: '450,320원', val2: '312,820원', thick: '330' },
+                    { gram: '310g', val1: '- 원', val2: '404,050원', thick: '0' }
                 ]
             },
             '도화지': {
                 header: '1060*757',
                 data: [
-                    { gram: '105g', val1: '91,370원', val2: '0원' },
-                    { gram: '130g', val1: '113,130원', val2: '0원' },
-                    { gram: '170g', val1: '147,940원', val2: '0원' },
-                    { gram: '180g', val1: '156,640원', val2: '0원' },
-                    { gram: '200g(미색)', val1: '248,850원', val2: '0원' },
-                    { gram: '220g', val1: '273,740원', val2: '0원' }
+                    { gram: '105g', val1: '91,370원', val2: '0원', thick: '170' },
+                    { gram: '130g', val1: '113,130원', val2: '0원', thick: '205' },
+                    { gram: '170g', val1: '147,940원', val2: '0원', thick: '268' },
+                    { gram: '180g', val1: '156,640원', val2: '0원', thick: '275' },
+                    { gram: '200g(미색)', val1: '248,850원', val2: '0원', thick: '0' },
+                    { gram: '220g', val1: '273,740원', val2: '0원', thick: '0' }
                 ]
             },
             '아트지/스노우지': {
                 header: '4*6판',
                 data: [
-                    { gram: '80g', val1: '87,140원', val2: '60,530원' },
-                    { gram: '100g', val1: '88,000원', val2: '61,130원' },
-                    { gram: '120g', val1: '105,590원', val2: '73,350원' },
-                    { gram: '150g', val1: '134,290원', val2: '93,280원' },
-                    { gram: '180g', val1: '161,150원', val2: '111,940원' },
-                    { gram: '200g', val1: '179,050원', val2: '124,380원' },
-                    { gram: '250g', val1: '223,810원', val2: '155,470원' },
-                    { gram: '300g', val1: '268,580원', val2: '186,570원' }
+                    { gram: '80g', val1: '87,140원', val2: '60,530원', thick: '0' },
+                    { gram: '100g', val1: '88,000원', val2: '61,130원', thick: '0' },
+                    { gram: '120g', val1: '105,590원', val2: '73,350원', thick: '0' },
+                    { gram: '150g', val1: '134,290원', val2: '92,180원', thick: '0' },
+                    { gram: '180g', val1: '161,150원', val2: '111,940원', thick: '0' },
+                    { gram: '200g', val1: '179,050원', val2: '124,380원', thick: '0' },
+                    { gram: '250g', val1: '223,810원', val2: '155,470원', thick: '0' },
+                    { gram: '300g', val1: '268,580원', val2: '186,570원', thick: '0' }
                 ]
             }
         };
@@ -337,7 +337,12 @@
 
             let rowsHTML = '';
             quickTableData[type].data.forEach(function(item) {
-                rowsHTML += '<tr class="hover:bg-slate-50 transition-colors">' +
+                var safeName = escapeQuotes(type);
+                var safeGram = escapeQuotes(item.gram);
+                var safePrice = escapeQuotes(item.val1); 
+                var safeThick = escapeQuotes(item.thick || '0');
+
+                rowsHTML += '<tr class="hover:bg-blue-100 transition-colors cursor-pointer" onclick="quickDisplay(\''+safeThick+'\', \''+safeName+'\', \''+safeGram+'\', \''+safePrice+'\', \'빠른단가표\')">' +
                             '<td class="p-3 md:p-4 border-r border-slate-100 font-bold text-slate-800">' + type + '</td>' +
                             '<td class="p-3 md:p-4 border-r border-slate-100 text-slate-600 font-bold">' + item.gram + '</td>' +
                             '<td class="p-3 md:p-4 border-r border-slate-100 font-bold text-blue-600">' + item.val1 + '</td>' +
@@ -376,6 +381,28 @@
             });
         }
 
+        // --- 여기서부터 추가/수정된 입력값 저장 복원 기능입니다 ---
+        function restoreInputValues() {
+            var savedW = localStorage.getItem('saved_bookW');
+            var savedH = localStorage.getItem('saved_bookH');
+            var savedPg = localStorage.getItem('saved_page');
+            var savedBoard = localStorage.getItem('saved_board');
+
+            if (savedW !== null) document.getElementById('bookW').value = savedW;
+            if (savedH !== null) document.getElementById('bookH').value = savedH;
+            if (savedPg !== null) document.getElementById('page_input').value = savedPg;
+            if (savedBoard !== null) {
+                var sel = document.getElementById('board_select');
+                for (var i = 0; i < sel.options.length; i++) {
+                    if (sel.options[i].value === savedBoard) {
+                        sel.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+        // ------------------------------------------------
+
         function getFavStorageKey() { return 'paper_pro_global_favs'; }
         function getCurrentFavorites() { return JSON.parse(localStorage.getItem(getFavStorageKey()) || '[]'); }
         function saveCurrentFavorites(favs) { localStorage.setItem(getFavStorageKey(), JSON.stringify(favs)); }
@@ -398,14 +425,27 @@
         }
 
         function calc() {
-            var w      = parseFloat(document.getElementById('bookW').value) || 0;
-            var h      = parseFloat(document.getElementById('bookH').value) || 0;
-            var pg     = parseInt(document.getElementById('page_input').value) || 0;
+            var bookWInput = document.getElementById('bookW');
+            var bookHInput = document.getElementById('bookH');
+            var pageInput  = document.getElementById('page_input');
+            var sel        = document.getElementById('board_select');
+
+            var w      = parseFloat(bookWInput.value) || 0;
+            var h      = parseFloat(bookHInput.value) || 0;
+            var pg     = parseInt(pageInput.value) || 0;
             var t_um   = parseFloat(document.getElementById('hidden_thick').value) || 0;
-            var sel    = document.getElementById('board_select');
             var gakFB  = parseFloat(sel.selectedOptions[0] && sel.selectedOptions[0].dataset.gak) || 0;
             var misoFB = parseFloat(sel.selectedOptions[0] && sel.selectedOptions[0].dataset.miso) || 0;
             var bleed  = parseFloat(sel.selectedOptions[0] && sel.selectedOptions[0].dataset.bleed) || 17;
+
+            // --- 입력값 실시간 저장 (새로고침 시 유지용) ---
+            localStorage.setItem('saved_bookW', bookWInput.value);
+            localStorage.setItem('saved_bookH', bookHInput.value);
+            localStorage.setItem('saved_page', pageInput.value);
+            if (sel.value) {
+                localStorage.setItem('saved_board', sel.value);
+            }
+            // ----------------------------------------
 
             var textThick = (t_um / 1000) * pg / 2;
             document.getElementById('seneca_result').innerText = t_um > 0 ? Math.ceil(textThick) : "0";
@@ -496,9 +536,6 @@
             renderFavorites();
         }
 
-        // ==========================================
-        // 여기서부터 완전히 새롭게 바뀐 렌더링 로직입니다!
-        // ==========================================
         function renderFavorites() {
             var bar = document.getElementById('favorites_bar');
             if (!bar) return;
@@ -508,7 +545,6 @@
                 : '<div class="text-xs font-bold text-slate-400">즐겨찾기 목록</div>';
             
             var cards = favs.map(function(f) {
-                // 어떤 특수기호가 들어와도 안전하게 HTML 속성(data-*)에 넣기 위해 치환합니다.
                 var safeId = (f.id || '').replace(/"/g, '&quot;');
                 var safeName = (f.name || '').replace(/"/g, '&quot;');
                 var safeThick = (f.thick || '').replace(/"/g, '&quot;');
@@ -516,7 +552,6 @@
                 var safePrice = (f.price || '').replace(/"/g, '&quot;');
                 var safeSize = (f.size || '').replace(/"/g, '&quot;');
 
-                // onclick 안에 문자열을 넣지 않고, 데이터를 담은 뒤 별도의 함수(quickDisplayFromCard)를 호출합니다.
                 return '<div data-thick="'+safeThick+'" data-name="'+safeName+'" data-gram="'+safeGram+'" data-price="'+safePrice+'" data-size="'+safeSize+'" onclick="quickDisplayFromCard(this)" class="fav-item-card group flex items-start gap-3 px-4 py-3 bg-white border-2 border-slate-100 rounded-2xl shadow-sm cursor-pointer hover:border-blue-300 transition-all">' +
                        '<button type="button" class="text-yellow-400 text-lg shrink-0" data-id="'+safeId+'" onclick="removeFavoriteFromCard(event, this)">★</button>' +
                        '<div class="flex flex-col min-w-0 flex-1">' +
@@ -535,7 +570,6 @@
             });
         }
 
-        // 새롭게 추가된 삭제 전용 함수 (안전하게 ID를 빼옵니다)
         function removeFavoriteFromCard(e, btn) {
             e.stopPropagation();
             var id = btn.getAttribute('data-id');
@@ -544,7 +578,6 @@
             renderFavorites();
         }
 
-        // 새롭게 추가된 카드 클릭 함수 (안전하게 데이터를 빼옵니다)
         function quickDisplayFromCard(card) {
             var thick = card.getAttribute('data-thick');
             var name = card.getAttribute('data-name');
@@ -558,6 +591,11 @@
             if (!confirm('모든 즐겨찾기를 삭제할까요?')) return;
             localStorage.removeItem(getFavStorageKey());
             renderFavorites();
+        }
+
+        function escapeQuotes(str) {
+            if (!str) return '';
+            return String(str).replace(/'/g, "\\'").replace(/"/g, "&quot;");
         }
 
         function quickDisplay(thick, name, gram, price, size) {
@@ -585,6 +623,8 @@
 
         window.onload = function() {
             restorePanels();
+            // 페이지가 열릴 때, 저장된 입력값이 있으면 불러옵니다.
+            restoreInputValues(); 
             renderFavorites();
             calc();
         };
